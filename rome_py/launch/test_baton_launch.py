@@ -16,7 +16,7 @@ def generate_launch_description():
         },
         {
             'baton_id': str(uuid.uuid4()),
-            'owner_id': 'operator',
+            'owner_id': 'master',
             'ttl': 5,
             'loop': True,
             'route': [{'relay': relays[2]}, {'relay': relays[3]}]
