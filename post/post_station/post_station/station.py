@@ -1,51 +1,62 @@
+from ament_index_python.packages import get_package_share_directory
+import os
+import yaml
 import rclpy
 from rclpy.node import Node
 from post_interfaces.msg import Parcel
 
 class Station(Node):
     def __init__(self):
-        station_name = 'station_default'
-        super().__init__(station_name)
-        
+        super().__init__('station_default')
+        self.this_station = self.get_fully_qualified_name()
+        self.instruction_sets = self.load_instruction_sets()
         self.subscription = self.create_subscription(
             Parcel,
-            f'{station_name}/parcels',
+            f'{self.this_station}/parcels',
             self.parcel_callback,
             10
         )
-
         self._pub_cache = {}
-
-        self.get_logger().info(f'Station "{station_name}" started, listening for parcels.')
+        self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
+    
+    def load_instruction_sets(self):
+        try:
+            config_path = os.path.join(
+                get_package_share_directory('post_station'),
+                'config',
+                'instructions.yaml'
+            )
+            with open(config_path, 'r') as file:
+                return yaml.safe_load(file).get('sets', {})
+        except Exception as e:
+            self.get_logger().error(f'Failed to load instruction sets: {e}')
+            return {}
 
     def get_publisher(self, topic_name: str):
         if topic_name not in self.publishers:
             self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, 10)
-            self.get_logger().info(f'Created publisher for topic: {topic_name}')
         return self._pub_cache[topic_name]
 
     def parcel_callback(self, parcel: Parcel):
-        this_station = self.get_fully_qualified_name()  # includes namespace + name
-        if parcel.next_destination != this_station:
-            self.get_logger().warn(f'Parcel {parcel.parcel_id} not intended for this station ({this_station}). Ignoring.')
+        if parcel.next_destination != self.this_station:
+            self.get_logger().warn(
+                f'Parcel {parcel.parcel_id} not intended for this station ({self.this_station}). Ignoring.'
+            )
             return
 
-        self.get_logger().info(f'Received parcel {parcel.parcel_id} at {this_station}')
-        
-        # TODO: Load and execute instructions based on parcel.instruction_set_id and this_station
-        
-        # For now, just forward to next_destination (stub logic)
-        next_dest = parcel.next_destination
-        
-        # TEMP: prevent inf loop
-        if next_dest == self.get_fully_qualified_name():
-            self.get_logger().info('Already at final destination. Not forwarding.')
-            return
+        self.get_logger().info(f'Received parcel {parcel.parcel_id} at {self.this_station}')
+        actions = self.instruction_sets.get(parcel.instruction_set_id, {}).get(self.this_station, [])
+       
+        if not actions:
+            self.get_logger().info(f'No actions defined for this parcel at this station.')
+        else:
+            self.get_logger().info(f'Executing {len(actions)} actions for parcel {parcel.parcel_id}')
+            for action in actions:
+                self.get_logger().info(f'Would execute action: {action}')
 
-        next_topic = f'{next_dest}/parcels'
-        publisher = self.get_publisher(next_topic)
-        publisher.publish(parcel)
-        self.get_logger().info(f'Forwarded parcel {parcel.parcel_id} to {next_dest}')
+        # TEMP: No action effects yet — avoid infinite loop
+        self.get_logger().info(f'Parcel {parcel.parcel_id} processing complete (no forward).')
+
 
 def main(args=None):
     rclpy.init(args=args)

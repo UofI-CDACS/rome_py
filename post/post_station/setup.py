@@ -1,3 +1,5 @@
+import os
+import glob
 from setuptools import setup
 
 package_name = 'post_station'
@@ -7,6 +9,7 @@ setup(
     version='0.0.1',
     packages=[package_name],
     data_files=[
+        ('share/' + package_name + '/config', glob.glob(os.path.join('config', 'instructions.yaml'))),
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],

@@ -1,0 +1,5 @@
+sets:
+  test:
+    /station_default:
+      - action: log_message
+        message: "Parcel received at station_default"
