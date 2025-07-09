@@ -9,7 +9,12 @@ setup(
     version='0.0.1',
     packages=[package_name],
     data_files=[
-        ('share/' + package_name + '/config', glob.glob(os.path.join('config', 'instructions.yaml'))),
+        # Install all YAML instruction sets
+        (
+            f'share/{package_name}/config/instruction_sets',
+            glob.glob(os.path.join('config', 'instruction_sets', '*.yaml'))
+        ),
+        # Required ROS packaging metadata
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
