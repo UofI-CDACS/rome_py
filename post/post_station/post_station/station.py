@@ -9,7 +9,7 @@ class Station(Node):
     def __init__(self):
         super().__init__('station_default')
         self.this_station = self.get_fully_qualified_name()
-        self.instruction_sets = self.load_instruction_sets()
+        self._instruction_sets_cache = {}
         self.subscription = self.create_subscription(
             Parcel,
             f'{self.this_station}/parcels',
@@ -19,22 +19,34 @@ class Station(Node):
         self._pub_cache = {}
         self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
     
-    def load_instruction_sets(self):
+    def get_instruction_set(self, set_id: str):
+        if set_id in self._instruction_sets_cache:
+            return self._instruction_sets_cache[set_id]
+
+        config_dir = os.path.join(
+            get_package_share_directory('post_station'),
+            'config',
+            'instruction_sets'
+        )
+        filepath = os.path.join(config_dir, f'{set_id}.yaml')
+
         try:
-            config_path = os.path.join(
-                get_package_share_directory('post_station'),
-                'config',
-                'instructions.yaml'
-            )
-            with open(config_path, 'r') as file:
-                return yaml.safe_load(file).get('sets', {})
+            with open(filepath, 'r') as f:
+                data = yaml.safe_load(f) or {}
+                self._instruction_sets_cache[set_id] = data
+                self.get_logger().info(f'Loaded instruction set "{set_id}"')
+                return data
+        except FileNotFoundError:
+            self.get_logger().error(f'Instruction set file not found: {filepath}')
         except Exception as e:
-            self.get_logger().error(f'Failed to load instruction sets: {e}')
-            return {}
+            self.get_logger().error(f'Failed to load instruction set "{set_id}": {e}')
+        
+        return {} 
 
     def get_publisher(self, topic_name: str):
         if topic_name not in self.publishers:
             self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, 10)
+            self.get_logger().info(f'Created publisher for topic: {topic_name}')
         return self._pub_cache[topic_name]
 
     def parcel_callback(self, parcel: Parcel):
@@ -45,7 +57,9 @@ class Station(Node):
             return
 
         self.get_logger().info(f'Received parcel {parcel.parcel_id} at {self.this_station}')
-        actions = self.instruction_sets.get(parcel.instruction_set_id, {}).get(self.this_station, [])
+        
+        instruction_set = self.get_instruction_set(parcel.instruction_set_id)
+        actions = instruction_set.get(self.this_station, [])
        
         if not actions:
             self.get_logger().info(f'No actions defined for this parcel at this station.')
@@ -53,6 +67,7 @@ class Station(Node):
             self.get_logger().info(f'Executing {len(actions)} actions for parcel {parcel.parcel_id}')
             for action in actions:
                 self.get_logger().info(f'Would execute action: {action}')
+                # TODO: call action handler here
 
         # TEMP: No action effects yet — avoid infinite loop
         self.get_logger().info(f'Parcel {parcel.parcel_id} processing complete (no forward).')
