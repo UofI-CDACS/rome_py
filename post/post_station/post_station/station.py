@@ -8,6 +8,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from post_interfaces.msg import Parcel
 from post_station.actions import ACTION_HANDLERS
+from post_station.actions import GRAVEYARD_SIGNAL
 import concurrent.futures
 
 
@@ -39,56 +40,72 @@ class Station(Node):
         try:
             with open(filepath, 'r') as f:
                 data = yaml.safe_load(f) or {}
-                self._instruction_sets_cache[set_id] = data
-                self.get_logger().info(f'Loaded instruction set "{set_id}"')
-                return data
+                graveyard = data.get('graveyard', 'default_graveyard')
+                self._instruction_sets_cache[set_id] = {
+                    'actions': data,
+                    'graveyard': graveyard
+                }
+                return self._instruction_sets_cache[set_id]
         except FileNotFoundError:
             self.get_logger().error(f'Instruction set file not found: {filepath}')
         except Exception as e:
             self.get_logger().error(f'Failed to load instruction set "{set_id}": {e}')
 
-        return {}
+        return {'actions': {}, 'graveyard': 'default_graveyard'}
 
     def get_publisher(self, topic_name: str):
         if topic_name not in self._pub_cache:
             self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, 10)
-            self.get_logger().info(f'Created publisher for topic: {topic_name}')
         return self._pub_cache[topic_name]
- 
+
+    def send_parcel(self, parcel, next_location: str):
+        # Update parcel locations
+        parcel.prev_location = self.this_station
+        parcel.next_location = next_location 
+    
+        # Prepare topic and publisher
+        topic = f'{next_location}/parcels'
+        publisher = self.get_publisher(topic)
+        
+        # Publish parcel
+        publisher.publish(parcel)
+
     def _on_parcel_received(self, parcel):
         # This lets async parcel processing run independently
         asyncio.ensure_future(self.parcel_callback(parcel))
 
-
     async def parcel_callback(self, parcel: Parcel):
-        if parcel.next_destination != self.this_station:
+        if parcel.next_location != self.this_station:
             self.get_logger().warn(
                 f'Parcel {parcel.parcel_id} not intended for this station ({self.this_station}). Ignoring.'
             )
             return
-
-        self.get_logger().info(f'Received parcel {parcel.parcel_id} at {self.this_station}')
-        instruction_set = self.get_instruction_set(parcel.instruction_set_id)
-        actions = instruction_set.get(self.this_station, [])
+        
+        instruction_set_data = self.get_instruction_set(parcel.instruction_set)
+        actions = instruction_set_data.get('actions', {}).get(self.this_station, [])
+        graveyard = instruction_set_data.get('graveyard')
         
         for action in actions:
             action_type = action.get('action_type')
             params = action.get('params', {})
-    
+
             handler = ACTION_HANDLERS.get(action_type)
             if not handler:
                 self.get_logger().warn(f'Unknown action: {action_type}')
-                continue
-    
-            self.get_logger().info(f'Executing action: {action_type}')
-            if inspect.iscoroutinefunction(handler):
-                await handler(self, parcel, params)
+                result = GRAVEYARD_SIGNAL
             else:
-                handler(self, parcel, params)
+                try:
+                    if inspect.iscoroutinefunction(handler):
+                        result = await handler(self, parcel, params)
+                    else:
+                        result = handler(self, parcel, params)
+                except Exception as e:
+                    self.get_logger().error(f'Error in action "{action_type}": {e}')
+                    result = GRAVEYARD_SIGNAL
 
-        self.get_logger().info(f'Parcel {parcel.parcel_id} processing complete.')
-
-
+            if result is GRAVEYARD_SIGNAL:
+                self.send_parcel(parcel, graveyard)
+                break  # Stop further processing
 
 def main(args=None):
     rclpy.init(args=args)
