@@ -1,12 +1,21 @@
 from post_station.actions import action
+from rclpy.node import Node
 
 @action('log_parcel')
-def log_parcel(node, parcel, params):
-    msg = (
-        f"[log_parcel] Parcel ID: {parcel.parcel_id}, "
-        f"Owner: {parcel.owner_id}, "
-        f"Location: {parcel.current_location}, "
-        f"Arrived at: {parcel.next_destination}"
-    )
-    node.get_logger().info(msg)
+def log_parcel(station, parcel, params):
+    if not isinstance(station, Node):
+        raise TypeError("Expected an rclpy Node instance")
 
+    parcel_id = getattr(parcel, 'parcel_id', '<unknown>')
+    owner_id = getattr(parcel, 'owner_id', '<unknown>')
+    prev_location = getattr(parcel, 'prev_location', '<unknown>')
+    next_location = getattr(parcel, 'next_location', '<unknown>')
+
+    msg = (
+        f"[log_parcel] Parcel ID: {parcel_id}, "
+        f"Owner: {owner_id}, "
+        f"Prev Location: {prev_location}, "
+        f"Next Location: {next_location}"
+    )
+
+    station.get_logger().info(msg)
