@@ -16,6 +16,8 @@ class Station(Node):
     def __init__(self):
         super().__init__('station_default')
         self.this_station = self.get_fully_qualified_name()
+        print(self.get_fully_qualified_name())
+        
         self._instruction_sets_cache = {}
         self.subscription = self.create_subscription(
             Parcel,
@@ -75,7 +77,7 @@ class Station(Node):
         asyncio.ensure_future(self.parcel_callback(parcel))
 
     async def parcel_callback(self, parcel: Parcel):
-        if parcel.next_location != self.this_station:
+        if ('/' + parcel.next_location) != self.this_station:
             self.get_logger().warn(
                 f'Parcel {parcel.parcel_id} not intended for this station ({self.this_station}). Ignoring.'
             )
@@ -110,7 +112,6 @@ class Station(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = Station()
-
     async def runner():
         try:
             while rclpy.ok():
