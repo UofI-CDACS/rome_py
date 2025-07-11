@@ -45,7 +45,7 @@ class ParcelPublisher(Node):
                 kv.value = kv_cfg.get('value', '')
                 parcel.data.append(kv)
             # Use next_location for topic name
-            topic_name = f'/{parcel.next_location}/parcels'
+            topic_name = f'{parcel.next_location}/parcels'
 
             if topic_name not in self.publisher_cache:
                 self.publisher_cache[topic_name] = self.create_publisher(Parcel, topic_name, 10)
