@@ -35,7 +35,7 @@ class ParcelPublisher(Node):
             parcel.parcel_id = parcel_cfg.get('parcel_id', 'unknown')
             parcel.owner_id = parcel_cfg.get('owner_id', 'unknown')
             parcel.prev_location = parcel_cfg.get('prev_location', '')
-            parcel.next_location = parcel_cfg.get('next_location', '')
+            parcel.next_location = '/' + parcel_cfg.get('next_location', '')
             parcel.instruction_set = parcel_cfg.get('instruction_set', '')
             # Fill flexible metadata
             parcel.data = []
