@@ -3,7 +3,7 @@
     params:
       key: ttl
   
-  - action_type: log_parcel
+  
 
   - action_type: wait
     params:
@@ -23,6 +23,7 @@
 
       if_false:
         run_action: kill
+  - action_type: log_parcel
 
 /rospi_2:
   - action_type: decrement_data_key

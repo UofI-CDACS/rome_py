@@ -11,7 +11,7 @@ def generate_launch_description():
             'parcel_id': str(uuid.uuid4()),
             'owner_id': 'master',
             'prev_location': 'master',
-            'next_location': '/rospi_1',
+            'next_location': 'rospi_1',
             'instruction_set': 'loop',
             'data': [
                 {'key': 'ttl', 'value': '10'},
