@@ -2,12 +2,6 @@
   - action_type: decrement_data_key
     params:
       key: ttl
-  
-  
-
-  - action_type: wait
-    params:
-      seconds: 1
 
   - action_type: conditional
     params:
@@ -54,10 +48,6 @@
   
   - action_type: log_parcel
 
-  - action_type: wait
-    params:
-      seconds: 1
-
   - action_type: conditional
     params:
       condition:
@@ -79,10 +69,6 @@
       key: ttl
   
   - action_type: log_parcel
-
-  - action_type: wait
-    params:
-      seconds: 1
 
   - action_type: conditional
     params:

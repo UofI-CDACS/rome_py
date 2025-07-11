@@ -14,7 +14,7 @@ def generate_launch_description():
             'next_location': 'rospi_1',
             'instruction_set': 'loop',
             'data': [
-                {'key': 'ttl', 'value': '10'},
+                {'key': 'ttl', 'value': '10000'},
                 {'key': 'loop', 'value': 'true'}
             ]
         },
