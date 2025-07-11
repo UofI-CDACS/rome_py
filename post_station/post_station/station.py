@@ -77,7 +77,7 @@ class Station(Node):
         asyncio.ensure_future(self.parcel_callback(parcel))
 
     async def parcel_callback(self, parcel: Parcel):
-        if ('/' + parcel.next_location) != self.this_station:
+        if parcel.next_location != self.this_station:
             self.get_logger().warn(
                 f'Parcel {parcel.parcel_id} not intended for this station ({self.this_station}). Ignoring.'
             )

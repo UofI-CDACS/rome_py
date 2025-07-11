@@ -44,8 +44,6 @@ class ParcelPublisher(Node):
                 kv.key = kv_cfg.get('key', '')
                 kv.value = kv_cfg.get('value', '')
                 parcel.data.append(kv)
-            if parcel.next_location == '':
-                parcel.next_location = 'jeff'
             # Use next_location for topic name
             topic_name = f'/{parcel.next_location}/parcels'
 
