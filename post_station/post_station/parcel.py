@@ -53,10 +53,10 @@ class ParcelPublisher(Node):
             self.get_logger().info(f'Publishing parcel {parcel.parcel_id} to topic {topic_name}')
             self.publisher_cache[topic_name].publish(parcel)
 
-            self.published = True
-            self.timer.cancel()
-            self.get_logger().info('All parcels published, shutting down node.')
-            rclpy.shutdown()
+        self.published = True
+        self.timer.cancel()
+        self.get_logger().info('All parcels published, shutting down node.')
+        rclpy.shutdown()
 
 def main(args=None):
     rclpy.init(args=args)
