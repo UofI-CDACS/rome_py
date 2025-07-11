@@ -7,8 +7,8 @@ def generate_launch_description():
     #hostnames = ['rospi-1-desktop', 'rospi-2-desktop', 'rospi-3-desktop', 'rospi-4-desktop']  # simulated hostnames
     #stations = [hostname.replace('-', '_') + '/station_default' for hostname in hostnames]
     parcels = []
-    num_parcels = 10000  # Adjust this number as needed for your stress test
-    parcels = [
+    num_parcels = 5  # Adjust this number as needed for your stress test
+    """parcels = [
         {
             'parcel_id': str(uuid.uuid4()),
             'owner_id': 'master',
@@ -20,7 +20,7 @@ def generate_launch_description():
                 {'key': 'loop', 'value': 'true'}
             ]
         },
-    ]
+    ]"""
     for i in range(num_parcels):
         parcels.append({
             'parcel_id': str(uuid.uuid4()),
@@ -29,8 +29,8 @@ def generate_launch_description():
             'next_location': f'rospi_{(i % 4) + 1}',
             'instruction_set': 'loop',
             'data': [
-                {'key': 'ttl', 'value': '100'},
-                {'key': 'loop', 'value': 'true'}
+            {'key': 'ttl', 'value': '100'},
+            {'key': 'loop', 'value': 'true'}
             ]
         })
 
