@@ -73,6 +73,7 @@ class Station(Node):
         publisher.publish(parcel)
 
     def _on_parcel_received(self, parcel):
+        # self.get_logger().info(f'Received parcel {parcel.parcel_id} destined for {parcel.next_location}')
         # This lets async parcel processing run independently
         asyncio.ensure_future(self.parcel_callback(parcel))
 
@@ -84,7 +85,23 @@ class Station(Node):
             return
         
         instruction_set_data = self.get_instruction_set(parcel.instruction_set)
-        actions = instruction_set_data.get('actions', {}).get(self.this_station, [])
+        actions_map = instruction_set_data.get('actions', {})
+
+        actions_map = instruction_set_data.get('actions', {})
+        
+        actions = []
+        
+        # Case 1: fully qualified match if key is prefixed with '/'
+        if any(k.startswith('/') for k in actions_map):
+            actions = actions_map.get(self.this_station, [])
+            #self.get_logger().info(f'Checked full name "{self.this_station}" → {len(actions)} actions.')
+        
+        # Case 2: short name match only if no slash prefix
+        else:
+            station_tail = self.this_station.strip('/').split('/')[-1]
+            actions = actions_map.get(station_tail, [])
+            #self.get_logger().info(f'Checked short name "{station_tail}" → {len(actions)} actions.')
+        
         graveyard = instruction_set_data.get('graveyard')
         
         for action in actions:

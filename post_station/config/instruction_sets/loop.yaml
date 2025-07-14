@@ -1,4 +1,4 @@
-/rospi_1:
+rospi_1:
   - action_type: decrement_data_key
     params:
       key: ttl
@@ -13,18 +13,18 @@
       if_true:
         run_action: forward
         params:
-          destination: /rospi_2
+          destination: rospi_2
 
       if_false:
         run_action: kill
-  - action_type: log_parcel
+  - action_type: file_log_parcel
 
-/rospi_2:
+rospi_2:
   - action_type: decrement_data_key
     params:
       key: ttl
   
-  - action_type: log_parcel
+  - action_type: file_log_parcel
 
   - action_type: conditional
     params:
@@ -36,17 +36,17 @@
       if_true:
         run_action: forward
         params:
-          destination: /rospi_3
+          destination: rospi_3
 
       if_false:
         run_action: kill
 
-/rospi_3:
+rospi_3:
   - action_type: decrement_data_key
     params:
       key: ttl
   
-  - action_type: log_parcel
+  - action_type: file_log_parcel
 
   - action_type: conditional
     params:
@@ -58,17 +58,17 @@
       if_true:
         run_action: forward
         params:
-          destination: /rospi_4
+          destination: rospi_4
 
       if_false:
         run_action: kill
 
-/rospi_4:
+rospi_4:
   - action_type: decrement_data_key
     params:
       key: ttl
   
-  - action_type: log_parcel
+  - action_type: file_log_parcel
 
   - action_type: conditional
     params:
@@ -80,7 +80,7 @@
       if_true:
         run_action: forward
         params:
-          destination: /rospi_1
+          destination: rospi_1
 
       if_false:
         run_action: kill
