@@ -14,6 +14,12 @@ setup(
             f'share/{package_name}/config/instruction_sets',
             glob.glob(os.path.join('config', 'instruction_sets', '*.yaml'))
         ),
+        # Install all launch files
+        (
+          f'share/{package_name}/launch',
+          glob.glob(os.path.join('launch', '*.py'))
+        ),
+
         # Required ROS packaging metadata
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
@@ -28,6 +34,7 @@ setup(
     entry_points={
         'console_scripts': [
             'station = post_station.station:main',
+            'parcel = post_station.parcel:main',
         ],
     },
 )

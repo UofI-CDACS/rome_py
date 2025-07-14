@@ -16,6 +16,8 @@ class Station(Node):
     def __init__(self):
         super().__init__('station_default')
         self.this_station = self.get_fully_qualified_name()
+        print(self.get_fully_qualified_name())
+        
         self._instruction_sets_cache = {}
         self.subscription = self.create_subscription(
             Parcel,
@@ -110,7 +112,6 @@ class Station(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = Station()
-
     async def runner():
         try:
             while rclpy.ok():
