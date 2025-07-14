@@ -49,9 +49,10 @@ def parse_log_file(LOG_DIR):
                 with open(file_path, 'r') as file:
                     for line in file:
                         if line.strip():
-                            parts = line.strip().split(',', len(metrics))
+                            parts = line.strip().split(', ')
+                            parts = parts[:len(metrics)]
                             match_metrics = DATA_PATTERN.findall(line) if line else []
-                            parts.append(match_metric[1] for match_metric in match_metrics)
+                            parts.extend(match_metric[1] for match_metric in match_metrics)
                             if len(parts) == len(new_metrics[log_id]):
                                 log_entry = dict(zip(new_metrics[log_id], parts))
                                 log_data.append(log_entry)
@@ -59,21 +60,27 @@ def parse_log_file(LOG_DIR):
                                 writer = csv.DictWriter(csvfile, fieldnames=new_metrics[log_id])
                                 if csvfile.tell() == 0:
                                     writer.writeheader()
-                                writer.writerow(log_entry)
+                                for log_entry in log_data:
+                                    writer.writerow(log_entry)
             else:
-                os.makefile(LOG_DIR + '/' + f'log-{log_id}.csv', 'w')
+                open(LOG_DIR + '/' + f'log-{log_id}.csv', 'w').close()
                 # Parse the first log line to extract dynamic DATA keys
                 new_metrics[log_id] = metrics.copy()
-                with open(file, 'r') as file:
+                with open(file_path, 'r') as file:
                     first_line = next((l for l in file if l.strip()), None)
                     match_metrics = DATA_PATTERN.findall(first_line) if first_line else []
-                    new_metrics[log_id].append(match_metric[0] for match_metric in match_metrics)
+                    # Flatten the generator expression to a list of keys
+                    new_metrics[log_id].extend([match_metric[0] for match_metric in match_metrics])
+                    #print(f"New metrics for log-{log_id}: {new_metrics[log_id]}")
+                    match_metrics = []
                 with open(file_path, 'r') as file:
                     for line in file:
                         if line.strip():
-                            parts = line.strip().split(',', len(metrics))
+                            parts = line.strip().split(', ')
+                            parts = parts[:len(metrics)]
                             match_metrics = DATA_PATTERN.findall(line) if line else []
-                            parts.append(match_metric[1] for match_metric in match_metrics)
+                            parts.extend(match_metric[1] for match_metric in match_metrics)
+                            #print(parts)
                             if len(parts) == len(new_metrics[log_id]):
                                 log_entry = dict(zip(new_metrics[log_id], parts))
                                 log_data.append(log_entry)
@@ -81,9 +88,11 @@ def parse_log_file(LOG_DIR):
                                 writer = csv.DictWriter(csvfile, fieldnames=new_metrics[log_id])
                                 if csvfile.tell() == 0:
                                     writer.writeheader()
-                                writer.writerow(log_entry)
+                                for log_entry in log_data:
+                                    writer.writerow(log_entry)
+
 def main():
-    fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
+    #fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
 
 if __name__ == "__main__":
