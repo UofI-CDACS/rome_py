@@ -7,7 +7,7 @@ LOG_DIR = '../post_logs'
 REMOTE_LOG_DIR = '~/Desktop/test_ws/src/post/post_logs'
 # Log type should be named log-{ID}-{PI}.txt
 LOG_PATTERN = re.compile(r'log-(?P<ID>[^-]+)-(?P<PI>[^.]+)\.txt')
-DATA_PATTERN = re.compile(r'KeyValue\(key=\'([^\']+)\',\s*value=\'([^\']+)\'\)')
+DATA_PATTERN = re.compile(r'(\w+)=([^;]+)')
 metrics = ['TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET']
 ip_list = [
     '172.23.254.18',
@@ -49,10 +49,10 @@ def parse_log_file(LOG_DIR):
                 with open(file_path, 'r') as file:
                     for line in file:
                         if line.strip():
-                            parts = line.strip().split(', ')
+                            parts = line.strip().split(',')
                             parts = parts[:len(metrics)]
                             match_metrics = DATA_PATTERN.findall(line) if line else []
-                            parts.extend(match_metric[1] for match_metric in match_metrics)
+                            parts.extend(match_metric[1].strip() for match_metric in match_metrics)
                             if len(parts) == len(new_metrics[log_id]):
                                 log_entry = dict(zip(new_metrics[log_id], parts))
                                 log_data.append(log_entry)
@@ -76,10 +76,9 @@ def parse_log_file(LOG_DIR):
                 with open(file_path, 'r') as file:
                     for line in file:
                         if line.strip():
-                            parts = line.strip().split(', ')
-                            parts = parts[:len(metrics)]
+                            parts = line.strip().split(',')
                             match_metrics = DATA_PATTERN.findall(line) if line else []
-                            parts.extend(match_metric[1] for match_metric in match_metrics)
+                            parts.extend(match_metric[1].strip() for match_metric in match_metrics)
                             #print(parts)
                             if len(parts) == len(new_metrics[log_id]):
                                 log_entry = dict(zip(new_metrics[log_id], parts))
@@ -92,7 +91,7 @@ def parse_log_file(LOG_DIR):
                                     writer.writerow(log_entry)
 
 def main():
-    #fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
+    fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
 
 if __name__ == "__main__":
