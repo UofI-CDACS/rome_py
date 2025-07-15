@@ -123,6 +123,7 @@ class Station(Node):
                     result = GRAVEYARD_SIGNAL
 
             if result is GRAVEYARD_SIGNAL:
+                self.get_logger().warn(f"Parcel {parcel.parcel_id} killed.")
                 self.send_parcel(parcel, graveyard)
                 break  # Stop further processing
 

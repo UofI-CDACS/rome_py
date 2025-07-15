@@ -18,6 +18,8 @@ rospi_1:
       if_false:
         run_action: kill
   - action_type: file_log_parcel
+    params:
+      log_path : ~/test_ws
 
 rospi_2:
   - action_type: decrement_data_key
@@ -25,7 +27,8 @@ rospi_2:
       key: ttl
   
   - action_type: file_log_parcel
-
+    params:
+      log_path: ~/test_ws
   - action_type: conditional
     params:
       condition:
@@ -47,6 +50,8 @@ rospi_3:
       key: ttl
   
   - action_type: file_log_parcel
+    params:
+      log_path: ~/test_ws
 
   - action_type: conditional
     params:
@@ -69,6 +74,8 @@ rospi_4:
       key: ttl
   
   - action_type: file_log_parcel
+    params:
+      log_path: ~/test_ws
 
   - action_type: conditional
     params:
@@ -84,4 +91,4 @@ rospi_4:
 
       if_false:
         run_action: kill
-  
+
