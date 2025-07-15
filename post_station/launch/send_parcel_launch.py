@@ -1,13 +1,15 @@
 import json
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch_ros.actions import Node, PushRosNamespace
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 import uuid
 
 def generate_launch_description():
     #hostnames = ['rospi-1-desktop', 'rospi-2-desktop', 'rospi-3-desktop', 'rospi-4-desktop']  # simulated hostnames
     #stations = [hostname.replace('-', '_') + '/station_default' for hostname in hostnames]
     parcels = []
-    num_parcels = 5  # Adjust this number as needed for your stress test
+    num_parcels = 4  # Adjust this number as needed for your stress test
     """parcels = [
         {
             'parcel_id': str(uuid.uuid4()),
@@ -29,7 +31,7 @@ def generate_launch_description():
             'next_location': f'rospi_{(i % 4) + 1}',
             'instruction_set': 'loop',
             'data': [
-            {'key': 'ttl', 'value': '100'},
+            {'key': 'ttl', 'value': '8'},
             {'key': 'loop', 'value': 'true'}
             ]
         })
@@ -37,6 +39,15 @@ def generate_launch_description():
     parcels_json = json.dumps(parcels)
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='',
+            description='Namespace to push'
+        ),
+
+        # Apply namespace to all nodes below
+        PushRosNamespace(LaunchConfiguration('namespace')),
+
         Node(
             package='post_station',
             executable='parcel',

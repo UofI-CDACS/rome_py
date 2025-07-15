@@ -16,4 +16,8 @@ def forward_action(station, parcel, params):
         station.get_logger().error('Station has no callable send_parcel method')
         return
 
+    namespace = station.get_namespace()
+    if not destination.startswith('/'):
+        destination = f'/{namespace.strip("/")}/{destination.strip("/")}'
+
     send_func(parcel, destination)
