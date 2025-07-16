@@ -28,13 +28,14 @@ class Station(Node):
         )
         self._pub_cache = {}
         self.get_logger().info(f'Station "{self.this_station}" started, listening ... for parcels.')
+        #self.get_logger().info(f'Loaded instruction sets: {INSTRUCTION_SETS.keys()}')
 
     def get_instruction_set(self, set_id: str):
-        cls = INSTRUCTION_SETS.get(set_id)
-        if not cls:
+        instruction_set = INSTRUCTION_SETS.get(set_id)
+        if not instruction_set:
             self.get_logger().error(f'Unknown instruction set: {set_id}')
             return None
-        return cls()  # Create fresh instance 
+        return instruction_set  # Create fresh instance 
 
     def get_publisher(self, topic_name: str):
         if topic_name not in self._pub_cache:
