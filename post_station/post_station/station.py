@@ -8,8 +8,8 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from post_interfaces.msg import Parcel
 from post_station.actions import ACTION_HANDLERS
-from post_station.actions import GRAVEYARD_SIGNAL
 from post_station.instruction_sets import INSTRUCTION_SETS
+from post_station.instruction_sets.signals import InstructionSignal
 import concurrent.futures
 
 
@@ -71,15 +71,25 @@ class Station(Node):
             return
 
         graveyard = getattr(instruction_set, 'graveyard', 'default_graveyard') 
+        
         try:
             result = await instruction_set.run(self, parcel)
-            if result is GRAVEYARD_SIGNAL:
-                self.get_logger().warn(f"Parcel {parcel.parcel_id} killed.")
+
+            if result == InstructionSignal.GRAVEYARD:
+                self.get_logger().warn(f"Parcel {parcel.parcel_id} killed. Sending to graveyard.")
                 self.send_parcel(parcel, graveyard)
+            elif result == InstructionSignal.RETRY:
+                self.get_logger().warn(f"Parcel {parcel.parcel_id} retry requested. Retry not defined at this time.")
+            elif result == InstructionSignal.ERROR:
+                self.get_logger().error(f"Parcel {parcel.parcel_id} encountered an error signal.")
+                self.send_parcel(parcel, graveyard)
+            else:
+                # CONTINUE or other signals - assume normal flow, do nothing or logging
+                self.get_logger().info(f"Parcel {parcel.parcel_id} processed successfully.")
         except Exception as e:
             self.get_logger().error(f"Instruction set error: {e}")
-            self.get_logger().warn(f"Parcel {parcel.parcel_id} killed.")
-            self.send_parcel(parcel, graveyard) 
+            self.get_logger().warn(f"Parcel {parcel.parcel_id} killed due to exception.")
+            self.send_parcel(parcel, graveyard)
 
 def main(args=None):
     rclpy.init(args=args)

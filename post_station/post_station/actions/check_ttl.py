@@ -15,7 +15,6 @@ def get_data_value(parcel, key):
 async def check_ttl(station, parcel, params):
     if not isinstance(station, Node):
         raise TypeError("Expected an rclpy Node instance")
-
     key = await _resolve_param(station, parcel, params.get('key'))
     if key is None:
         station.get_logger().error('check_ttl missing "key" parameter')
@@ -25,7 +24,6 @@ async def check_ttl(station, parcel, params):
     if not isinstance(value, int):
         station.get_logger().error(f'check_ttl: Key "{key}" missing or not int')
         return False
-
     return value > 0
 
 
