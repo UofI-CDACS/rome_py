@@ -75,12 +75,12 @@ class Station(Node):
         try:
             result = await instruction_set.run(self, parcel)
 
-            if result == InstructionSignal.GRAVEYARD:
+            if result.signal == InstructionSignal.GRAVEYARD:
                 self.get_logger().warn(f"Parcel {parcel.parcel_id} killed. Sending to graveyard.")
                 self.send_parcel(parcel, graveyard)
-            elif result == InstructionSignal.RETRY:
+            elif result.signal == InstructionSignal.RETRY:
                 self.get_logger().warn(f"Parcel {parcel.parcel_id} retry requested. Retry not defined at this time.")
-            elif result == InstructionSignal.ERROR:
+            elif result.signal == InstructionSignal.ERROR:
                 self.get_logger().error(f"Parcel {parcel.parcel_id} encountered an error signal.")
                 self.send_parcel(parcel, graveyard)
             else:
