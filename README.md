@@ -1,16 +1,8 @@
-Clone this repo to src/rome of the workspace directory
+# Rome_Py
+This repository is the stress test system used across four different raspberry pi's across a local network.
+## Structure
+The structure of this repository is that everything needing to be ran is in Post_scripts. The contains all of the launching files, installation files, and DDS config files.
+### How to run
+SSHPI.sh runs a script that automatically installs all of the specified repositories files at the location specified in the gui, then it will launch a station on each of the pi's that listen for the parcels.
+launch_parcels.sh runs a script that lets you specify parameters for the parcels that you will be sending to the stations, these parameters include the amount of parcels to send, what the instruction set is, whether you want the parcels to be sent forever, and whether to log the parcels.
 
-Copy .cyclonedds.xml to ~/.cyclonedds.xml
-
-Then navigate to the workspace directory and run
-    ```source src/rome/rome_scripts/cyclone_source.sh
-       sudo rm -rf build install log
-       colcon build --symlink-install
-       source install/setup.bash
-    ```
-Then
-    On rospi-0-desktop:
-        `./src/rome/rome_scripts/launch_batons.sh`
-    On rospi-<1-4>-desktop
-        `./src/rome/rome_scripts/launch_relay.sh`
-    
