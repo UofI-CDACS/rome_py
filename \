@@ -27,7 +27,7 @@ class Station(Node):
             10
         )
         self._pub_cache = {}
-        self.get_logger().info(f'Station "{self.this_station}" started, listening ... for parcels.')
+        self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
 
     def get_instruction_set(self, set_id: str):
         cls = INSTRUCTION_SETS.get(set_id)
@@ -68,17 +68,16 @@ class Station(Node):
         if instruction_set is None:
             self.get_logger().warn(f"No instruction set found for {parcel.instruction_set}")
             return
-
-        graveyard = getattr(instruction_set, 'graveyard', 'default_graveyard') 
+        
         try:
             result = await instruction_set.run(self, parcel)
             if result is GRAVEYARD_SIGNAL:
                 self.get_logger().warn(f"Parcel {parcel.parcel_id} killed.")
-                self.send_parcel(parcel, graveyard)
+                self.send_parcel(parcel, instruction_set.graveyard)
         except Exception as e:
             self.get_logger().error(f"Instruction set error: {e}")
             self.get_logger().warn(f"Parcel {parcel.parcel_id} killed.")
-            self.send_parcel(parcel, graveyard) 
+            self.send_parcel(parcel, instruction_set.graveyard) 
 
 def main(args=None):
     rclpy.init(args=args)
