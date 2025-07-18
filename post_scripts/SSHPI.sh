@@ -56,6 +56,7 @@ if [ ! -d post ]; then
 fi
 cd post
 git checkout $BRANCH_NAME
+echo "BRANCH_NAME is: '$BRANCH_NAME'"
 GIT_OUTPUT=$(git pull)
 cd "$(eval echo "$WORKSPACE_FOLDER")"
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
