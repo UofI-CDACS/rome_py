@@ -73,10 +73,10 @@ for ip in "${!pi_credentials[@]}"; do
 
     sshpass -p "$password" ssh -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "
         cd $WORKSPACE_FOLDER/src
-        if [ ! -d rome_py ]; then
-            git clone https://github.com/UofI-CDACS/rome_py.git rome_py
+        if [ ! -d post ]; then
+            git clone https://github.com/UofI-CDACS/rome_py.git \"$WORKSPACE_FOLDER/src/post\"
         fi
-        cd rome_py
+        cd post
         git checkout $BRANCH_NAME
         GIT_OUTPUT=\$(git pull)
         cd $WORKSPACE_FOLDER
