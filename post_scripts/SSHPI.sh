@@ -48,7 +48,7 @@ if [ -z "$FORM_OUTPUT" ]; then
     yad --error --text="All required fields must be filled."
     exit 1
 fi
-IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME <<< "$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME DDS_CONFIG <<< "$FORM_OUTPUT"
 # Run the same steps locally
 cd "$WORKSPACE_FOLDER/src"
 if [ ! -d post ]; then
