@@ -57,7 +57,7 @@ fi
 cd post
 git checkout $BRANCH_NAME
 GIT_OUTPUT=$(git pull)
-cd "$WORKSPACE_FOLDER"
+cd "$(eval echo "$WORKSPACE_FOLDER")"
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     sudo rm -rf build install log
