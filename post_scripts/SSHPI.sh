@@ -28,7 +28,7 @@ declare -A pi_node_names=(
     [172.23.254.23]="rospi_3"
     [172.23.254.24]="rospi_4"
 )
-WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-~/Desktop/test_ws}"
+WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 BRANCH_NAME="${BRANCH_NAME:-main}"
 DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
