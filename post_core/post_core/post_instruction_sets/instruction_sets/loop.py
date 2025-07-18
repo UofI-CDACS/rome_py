@@ -1,0 +1,37 @@
+from post_instruction_sets import InstructionSet, register_instruction_set, InstructionResult, InstructionSignal
+from post_actions.registry import get_action
+
+@register_instruction_set("loop")
+class LoopInstructionSet(InstructionSet):
+    graveyard = "default_graveyard"
+
+    async def run(self, station, parcel) -> InstructionResult:
+        # Bind actions to this station and parcel
+        dec_ttl = get_action("decrement_data_key")(station, parcel)
+        log_parcel = get_action("file_log_parcel")(station, parcel)
+        check_ttl = get_action("check_ttl")(station, parcel)
+        forward = get_action("forward")(station, parcel)
+
+        # Map current station to the next destination
+        next_map = {
+            "rospi_1": "rospi_2",
+            "rospi_2": "rospi_3",
+            "rospi_3": "rospi_4",
+            "rospi_4": "rospi_1",
+        }
+
+        name = station.get_name().split("/")[-1]
+
+        await dec_ttl(key="ttl")
+        await log_parcel(log_path="~/test_ws")
+
+        if not await check_ttl(key="ttl"):
+            return InstructionResult(signal=InstructionSignal.GRAVEYARD)
+
+        destination = next_map.get(name)
+        if destination is None:
+            return InstructionResult(signal=InstructionSignal.ERROR, notes=f"Unknown station name: {name}")
+
+        await fwd(destination=destination)
+
+        return InstructionResult(signal=InstructionSignal.CONTINUE, next_destination=destination)

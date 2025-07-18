@@ -19,14 +19,14 @@ class LoopInstructionSet(InstructionSet):
         if not condition:
             return InstructionResult(signal=InstructionSignal.GRAVEYARD)
         if name == "rospi_1":
-            ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_2"})
+            destination = ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_2"})
         elif name == "rospi_2":
-            ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_3"})
+            destination = ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_3"})
         elif name == "rospi_3":
-            ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_4"})
+            destination = ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_4"})
         elif name == "rospi_4":
-            ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_1"})
+            destination = ACTION_HANDLERS["forward"](station, parcel, {"destination": "rospi_1"})
         else:
             return InstructionResult(signal=InstructionSignal.ERROR)
 
-        return InstructionResult(signal=InstructionSignal.CONTINUE)
+        return InstructionResult(signal=InstructionSignal.CONTINUE, next_destination = destination)

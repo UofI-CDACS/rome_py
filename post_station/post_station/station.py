@@ -84,8 +84,12 @@ class Station(Node):
                 self.get_logger().error(f"Parcel {parcel.parcel_id} encountered an error signal.")
                 self.send_parcel(parcel, graveyard)
             else:
-                # CONTINUE or other signals - assume normal flow, do nothing or logging
-                self.get_logger().info(f"Parcel {parcel.parcel_id} processed successfully.")
+                if result.next_destination:
+                    self.get_logger().info(f"Parcel {parcel.parcel_id} forwarding to {result.next_destination}")
+                    self.send_parcel(parcel, result.next_destination)
+                else:
+                    self.get_logger().info(f"Parcel {parcel.parcel_id} processed successfully.")
+
         except Exception as e:
             self.get_logger().error(f"Instruction set error: {e}")
             self.get_logger().warn(f"Parcel {parcel.parcel_id} killed due to exception.")

@@ -2,22 +2,23 @@ from post_station.actions import action
 from rclpy.node import Node
 
 @action('forward')
-def forward_action(station, parcel, params):
-    if not isinstance(station, Node):
-        raise TypeError("Expected an rclpy Node instance")
+def forward(*, destination: str):
+    def _run(station, parcel):
+        if not isinstance(station, Node):
+            raise TypeError("Expected an rclpy Node instance")
+        
+        if not destination:
+            station.get_logger().error('Forward action missing "destination" parameter')
+            return None
+        
+        namespace = station.get_namespace()
+        if not destination.startswith('/'):
+            dest = f'/{namespace.strip("/")}/{destination.strip("/")}'
+        else:
+            dest = destination
 
-    destination = params.get('destination')
-    if not destination:
-        station.get_logger().error('Forward action missing "destination" parameter')
-        return
+        parcel.prev_location = getattr(station, 'this_station', '<unknown>')
+        parcel.next_location = dest
 
-    send_func = getattr(station, 'send_parcel', None)
-    if not callable(send_func):
-        station.get_logger().error('Station has no callable send_parcel method')
-        return
-
-    namespace = station.get_namespace()
-    if not destination.startswith('/'):
-        destination = f'/{namespace.strip("/")}/{destination.strip("/")}'
-
-    send_func(parcel, destination)
+        return dest
+    return _run
