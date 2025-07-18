@@ -75,7 +75,7 @@ fi
 
 cd $WORKSPACE_FOLDER
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
-source /install/setup.bash
+source "$WORKSPACE_FOLDER/src/install/setup.bash"
 ros2 launch post_station send_parcel_launch.py --ros-args \
     -p parcel_count:=$PARCEL_COUNT \
     -p owner:="$OWNER" \
