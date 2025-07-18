@@ -16,7 +16,7 @@ if ! command -v yad &> /dev/null; then
     fi
 fi
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
-DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
+DDS_CONFIG="${DDS_CONFIG:-cyclone_source.sh}"
 PARCEL_COUNT="${PARCEL_COUNT:-1}"
 OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-default}"
@@ -25,8 +25,8 @@ LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
 NEXT_LOCATION="${NEXT_LOCATION:-rospi_1}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
-    --field="DDS Config":CB "cyclonedds.xml!fastdds.xml" "$DDS_CONFIG" \
-    --field="Parcel Count":NUM "$PARCEL_COUNT" \
+    --field="DDS Config":CB "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
+    --field="Parcel Count":NUM \
     --field="Owner":TXT "$OWNER" \
     --field="Instruction Set":TXT "$INSTRUCTION_SET" \
     --field="Custom Parameters (optional)":CHK "$CUSTOM_PARAMS" \
@@ -74,9 +74,8 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
+source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
 source /install/setup.bash
-
 ros2 launch post_station send_parcel_launch.py --ros-args \
     -p parcel_count:=$PARCEL_COUNT \
     -p owner:="$OWNER" \

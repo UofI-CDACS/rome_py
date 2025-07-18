@@ -101,8 +101,8 @@ for HOST in "${!pi_credentials[@]}"; do
     NODE_NAME="${pi_node_names[$HOST]}"
     REMOTE_COMMAND="
         cd $WORKSPACE_FOLDER
-        source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG
-        source install/setup.bash
+        source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
+        source /install/setup.bash
         ros2 run post_station station --ros-args -r __node:=${NODE_NAME}
     "
     gnome-terminal --tab -- bash -c "echo 'Connecting to $USER_AT_HOST...'; sshpass -p '$PASSWORD' ssh -tt -o StrictHostKeyChecking=no $USER_AT_HOST '$REMOTE_COMMAND; bash'; exec bash"
