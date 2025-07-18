@@ -61,7 +61,7 @@ echo "BRANCH_NAME is: '$BRANCH_NAME'"
 GIT_OUTPUT=$(git pull)
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     sudo rm -rf build install log
-    source opt/ros/jazzy/setup.bash
+    source /opt/ros/jazzy/setup.bash
     colcon build --symlink-install
 else
     echo "No changes to pull. Skipping colcon build."
@@ -82,7 +82,7 @@ for ip in "${!pi_credentials[@]}"; do
         GIT_OUTPUT=\$(git pull)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
-            source opt/ros/jazzy/setup.bash
+            source /opt/ros/jazzy/setup.bash
             echo \"$password\" | sudo -S rm -rf build install log
             colcon build --symlink-install
         else
