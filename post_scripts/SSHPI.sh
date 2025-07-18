@@ -72,7 +72,7 @@ for ip in "${!pi_credentials[@]}"; do
     username="${creds%%:*}"
     password="${creds#*:}"
 
-    sshpass -p "$password" ssh -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
+    sshpass -p "$password" ssh -o -t StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
         cd $WORKSPACE_FOLDER/src
         if [ ! -d post ]; then
             git clone https://github.com/UofI-CDACS/rome_py.git post
@@ -82,6 +82,7 @@ for ip in "${!pi_credentials[@]}"; do
         GIT_OUTPUT=\$(git pull)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
+            source opt/ros/jazzy/setup.bash
             echo \"$password\" | sudo -S rm -rf build install log
             colcon build --symlink-install
         else
