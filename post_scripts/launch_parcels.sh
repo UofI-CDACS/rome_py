@@ -74,8 +74,8 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/rome_py/post_scripts/$DDS_CONFIG"
-source install/setup.bash
+source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
+source /install/setup.bash
 ros2 launch post_station send_parcel_launch.py --ros-args \
     -p parcel_count:=$PARCEL_COUNT \
     -p owner:="$OWNER" \
@@ -83,7 +83,7 @@ ros2 launch post_station send_parcel_launch.py --ros-args \
     -p data:="$PARAMS"
     sleep 10 # This should be adjusted to be more accurate on when the logging is done
     if [ "$PARSE_LOGS" = true ]; then
-        python3 "$WORKSPACE_FOLDER/src/post_logs/Parse_logs.py"
+        python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
     fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
@@ -94,5 +94,5 @@ if [ "$LOOP_INFINITELY" = "TRUE" ]; then
         -p data:="$PARAMS"
     sleep 5 # This should be adjusted to be more accurate on when the logging is done
     if [ "$PARSE_LOGS" = true ]; then
-        python3 "$WORKSPACE_FOLDER/src/post_logs/Parse_logs.py"
+        python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
     fi
