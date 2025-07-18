@@ -71,7 +71,7 @@ for ip in "${!pi_credentials[@]}"; do
     username="${creds%%:*}"
     password="${creds#*:}"
 
-    sshpass -p "$password" ssh -o -tt StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
+    sshpass -p "$password" ssh -o -t StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
         cd $WORKSPACE_FOLDER/src
         if [ ! -d rome_py ]; then
             git clone https://github.com/UofI-CDACS/rome_py.git rome_py
