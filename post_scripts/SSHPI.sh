@@ -50,7 +50,7 @@ if [ -z "$FORM_OUTPUT" ]; then
 fi
 IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME <<< "$FORM_OUTPUT"
 # Run the same steps locally
-cd "$WORKSPACE_FOLDER/src"
+cd "$WORKSPACE_FOLDER/src" || { echo "Error: Directory $WORKSPACE_FOLDER/src does not exist."; exit 1; }
 if [ ! -d rome_py ]; then
     git clone https://github.com/UofI-CDACS/rome_py.git rome_py
 fi
@@ -58,10 +58,13 @@ cd rome_py
 git checkout $BRANCH_NAME
 GIT_OUTPUT=$(git pull)
 cd "$WORKSPACE_FOLDER"
-source "$WORKSPACE_FOLDER/src/rome_py/POST_SCRIPTS/$DDS_CONFIG"
+if [ ! -f "$WORKSPACE_FOLDER/src/rome_py/post_scripts/$DDS_CONFIG" ]; then
+    echo "Error: DDS Config file $DDS_CONFIG not found."; exit 1;
+fi
+source "$WORKSPACE_FOLDER/src/rome_py/post_scripts/$DDS_CONFIG"
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     sudo rm -rf build install log
-    colcon build --symlink-install
+    colcon build --symlink-install || { echo "Error: colcon build failed."; exit 1; }
 else
     echo "No changes to pull. Skipping colcon build."
 fi
@@ -69,10 +72,7 @@ fi
 for ip in "${!pi_credentials[@]}"; do
     creds="${pi_credentials[$ip]}"
     username="${creds%%:*}"
-    password="${creds#*:}"
-
-    sshpass -p "$password" ssh -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "
-        cd $WORKSPACE_FOLDER/src
+        cd $WORKSPACE_FOLDER/src || { echo "Error: Directory $WORKSPACE_FOLDER/src does not exist."; exit 1; }
         if [ ! -d post ]; then
             git clone https://github.com/UofI-CDACS/rome_py.git \"$WORKSPACE_FOLDER/src/post\"
         fi
@@ -82,7 +82,10 @@ for ip in "${!pi_credentials[@]}"; do
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
             echo \"$password\" | sudo -S rm -rf build install log
-            colcon build --symlink-install
+            colcon build --symlink-install || { echo \"Error: colcon build failed.\"; exit 1; }
+        else
+            echo \"No changes to pull. Skipping colcon build.\"
+        fi
         else
             echo \"No changes to pull. Skipping colcon build.\"
         fi
