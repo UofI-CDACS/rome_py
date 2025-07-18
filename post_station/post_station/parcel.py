@@ -10,6 +10,12 @@ class ParcelPublisher(Node):
         super().__init__('parcel_publisher')
 
         self.declare_parameter('parcels_json', '{}')
+        
+        self.namespace = self.get_namespace()
+        if self.namespace == '/':
+            self.namespace = ''
+        else:
+            self.namespace = self.namespace.strip('/')
 
         self.published = False
         self.timer = self.create_timer(1.0, self.publish_parcels)
@@ -35,8 +41,23 @@ class ParcelPublisher(Node):
             parcel.parcel_id = parcel_cfg.get('parcel_id', 'unknown')
             parcel.owner_id = parcel_cfg.get('owner_id', 'unknown')
             parcel.prev_location = parcel_cfg.get('prev_location', '')
-            parcel.next_location = '/' + parcel_cfg.get('next_location', '')
+            
+
+            raw_next_location = parcel_cfg.get('next_location', '')
+            if raw_next_location.startswith('/'):
+                # Already fully qualified, keep as is
+                parcel.next_location = raw_next_location
+            else:
+                self.get_logger().info(f"namespace='{self.namespace}', raw_next_location='{raw_next_location}'")
+
+                # Prepend namespace
+                if self.namespace:
+                    parcel.next_location = f'/{self.namespace.strip("/")}/{raw_next_location.strip("/")}'
+                else:
+                    parcel.next_location = f'/{raw_next_location.strip("/")}'
+            
             parcel.instruction_set = parcel_cfg.get('instruction_set', '')
+           
             # Fill flexible metadata
             parcel.data = []
             for kv_cfg in parcel_cfg.get('data', []):
@@ -44,9 +65,9 @@ class ParcelPublisher(Node):
                 kv.key = kv_cfg.get('key', '')
                 kv.value = kv_cfg.get('value', '')
                 parcel.data.append(kv)
-            # Use next_location for topic name
-            topic_name = f'{parcel.next_location}/parcels'
 
+            # Use next_location for topic name
+            topic_name = f"{parcel.next_location}/parcels"
             if topic_name not in self.publisher_cache:
                 self.publisher_cache[topic_name] = self.create_publisher(Parcel, topic_name, 10)
 
