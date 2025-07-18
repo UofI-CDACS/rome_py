@@ -15,7 +15,7 @@ if ! command -v yad &> /dev/null; then
         exit 1
     fi
 fi
-WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-~/Desktop/test_ws}"
+WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
 PARCEL_COUNT="${PARCEL_COUNT:-1}"
 OWNER="${OWNER:-Owner}"
@@ -74,7 +74,7 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/rome_py/POST_SCRIPTS/$DDS_CONFIG"
+source "$WORKSPACE_FOLDER/src/rome_py/post_scripts/$DDS_CONFIG"
 source install/setup.bash
 ros2 launch post_station send_parcel_launch.py --ros-args \
     -p parcel_count:=$PARCEL_COUNT \
