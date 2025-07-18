@@ -31,7 +31,7 @@ declare -A pi_node_names=(
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-~/Desktop/test_ws}"
 BRANCH_NAME="${BRANCH_NAME:-main}"
 DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
-FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
+FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Branch Name":TXT "$BRANCH_NAME" \
     --field="DDS Config:CB" "cyclonedds.xml!fastdds.xml" "$DDS_CONFIG" \

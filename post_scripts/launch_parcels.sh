@@ -96,5 +96,3 @@ if [ "$LOOP_INFINITELY" = "TRUE" ]; then
     if [ "$PARSE_LOGS" = true ]; then
         python3 "$WORKSPACE_FOLDER/src/post_logs/Parse_logs.py"
     fi
-
-
