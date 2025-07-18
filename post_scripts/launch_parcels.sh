@@ -26,7 +26,7 @@ NEXT_LOCATION="${NEXT_LOCATION:-rospi_1}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="DDS Config":CB "cyclonedds.xml!fastdds.xml" "$DDS_CONFIG" \
-    --field="Parcel Count":NUM \
+    --field="Parcel Count":NUM "$PARCEL_COUNT" \
     --field="Owner":TXT "$OWNER" \
     --field="Instruction Set":TXT "$INSTRUCTION_SET" \
     --field="Custom Parameters (optional)":CHK "$CUSTOM_PARAMS" \
@@ -76,6 +76,7 @@ fi
 cd $WORKSPACE_FOLDER
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
 source /install/setup.bash
+
 ros2 launch post_station send_parcel_launch.py --ros-args \
     -p parcel_count:=$PARCEL_COUNT \
     -p owner:="$OWNER" \
