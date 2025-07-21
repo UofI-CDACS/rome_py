@@ -34,7 +34,7 @@ DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Branch Name":TXT "$BRANCH_NAME" \
-    --field="DDS Config:CB" "cyclonedds.xml!fastdds.xml" "$DDS_CONFIG" \
+    --field="DDS Config:CB" "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
     --button="Install:0" --button="Cancel:1" \
     --separator=","
 )
