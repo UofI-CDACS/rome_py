@@ -57,7 +57,7 @@ fi
 cd post
 git checkout $BRANCH_NAME
 echo "BRANCH_NAME is: '$BRANCH_NAME'"
-
+cd $WORKSPACE_FOLDER
 GIT_OUTPUT=$(git pull)
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     echo \"$password\" | sudo rm -rf build install log
