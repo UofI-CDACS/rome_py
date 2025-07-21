@@ -4,26 +4,31 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 import uuid
-from launch.actions import SetEnvironmentVariable
+from launch.launch_context import LaunchContext
 
 def generate_launch_description():
     #hostnames = ['rospi-1-desktop', 'rospi-2-desktop', 'rospi-3-desktop', 'rospi-4-desktop']  # simulated hostnames
     #stations = [hostname.replace('-', '_') + '/station_default' for hostname in hostnames]
+    DeclareLaunchArgument('PARCEL_COUNT', default_value='1'),
+    DeclareLaunchArgument('OWNER', default_value='Owner'),
+    DeclareLaunchArgument('INSTRUCTION_SET', default_value='default'),
+    DeclareLaunchArgument('NEXT_LOCATION', default_value='rospi_1'),
+    DeclareLaunchArgument('DATA', default_value='{}')
+    context = LaunchContext()
+    parcel_count = int(LaunchConfiguration('PARCEL_COUNT').perform(context))
+    owner = LaunchConfiguration('OWNER').perform(context)
+    instruction_set = LaunchConfiguration('INSTRUCTION_SET').perform(context)
+    next_location = LaunchConfiguration('NEXT_LOCATION').perform(context)
+    data = json.loads(LaunchConfiguration('DATA').perform(context))
+
     parcels = []
-    PARCEL_COUNT = int(LaunchConfiguration('PARCEL_COUNT', default='1').perform({}))
-    OWNER = LaunchConfiguration('OWNER', default='Owner').perform({})
-    INSTRUCTION_SET = LaunchConfiguration('INSTRUCTION_SET', default='default').perform({})
-    NEXT_LOCATION = LaunchConfiguration('NEXT_LOCATION', default='rospi_1').perform({})
-    DATA = LaunchConfiguration('DATA', default='{}').perform({})
-    # Generate parcels
-    data = json.loads(DATA)
-    for i in range(PARCEL_COUNT):
+    for _ in range(parcel_count):
         parcels.append({
             'parcel_id': str(uuid.uuid4()),
-            'owner_id': OWNER,
+            'owner_id': owner,
             'prev_location': 'master',
-            'next_location': NEXT_LOCATION,
-            'instruction_set': INSTRUCTION_SET,
+            'next_location': next_location,
+            'instruction_set': instruction_set,
             'data': data
         })
 
