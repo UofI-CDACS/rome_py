@@ -79,7 +79,7 @@ for ip in "${!pi_credentials[@]}"; do
         fi
         cd post
         git checkout $BRANCH_NAME
-        GIT_OUTPUT=\$(git pull)
+        GIT_OUTPUT=\$(git pull -f)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
             source /opt/ros/jazzy/setup.bash

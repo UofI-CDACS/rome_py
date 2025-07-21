@@ -3,8 +3,6 @@
      <General>
         <Interfaces>
           <NetworkInterface name="eth0" />
-          <NetworkInterface name="lo" />
-          <NetworkInterface name="wlan0" />
         </Interfaces>
     </General>
    </Domain>
