@@ -58,7 +58,7 @@ cd post
 git checkout $BRANCH_NAME
 git fetch --all
 git reset --hard origin/$BRANCH_NAME
-GIT_OUTPUT=\$(git pull -f)
+GIT_OUTPUT=$(git pull)
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     cd $WORKSPACE_FOLDER
     echo \"$password\" | sudo rm -rf build install log
@@ -82,7 +82,7 @@ for ip in "${!pi_credentials[@]}"; do
         git checkout $BRANCH_NAME
         git fetch --all
         git reset --hard origin/$BRANCH_NAME
-        GIT_OUTPUT=\$(git pull -f)
+        GIT_OUTPUT=$(git pull)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
             source /opt/ros/jazzy/setup.bash
