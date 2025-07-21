@@ -17,10 +17,10 @@ if ! command -v yad &> /dev/null; then
 fi
 # Users, hosts, and passwords
 declare -A pi_credentials=(
-    [172.23.254.18]="rospi:rospi"
-    [172.23.254.22]="rospi:rospi"
-    [172.23.254.23]="rospi:rospi"
-    [172.23.254.24]="rospi:rospi"
+    [rospi-1-desktop.local]="rospi:rospi"
+    [rospi-2-desktop.local]="rospi:rospi"
+    [rospi-3-desktop.local]="rospi:rospi"
+    [rospi-4-desktop.local]="rospi:rospi"
 )
 declare -A pi_node_names=(
     [172.23.254.18]="rospi_1"
