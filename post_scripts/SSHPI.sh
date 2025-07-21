@@ -29,7 +29,7 @@ declare -A pi_node_names=(
     [172.23.254.24]="rospi_4"
 )
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
-BRANCH_NAME="${BRANCH_NAME:-main}"
+BRANCH_NAME="${BRANCH_NAME:-post-develop-feature-log-parser}"
 DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
@@ -57,9 +57,9 @@ fi
 cd post
 git checkout $BRANCH_NAME
 echo "BRANCH_NAME is: '$BRANCH_NAME'"
-cd $WORKSPACE_FOLDER
 GIT_OUTPUT=$(git pull)
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
+    cd $WORKSPACE_FOLDER
     echo \"$password\" | sudo rm -rf build install log
     source /opt/ros/jazzy/setup.bash
     colcon build --symlink-install
