@@ -23,10 +23,10 @@ declare -A pi_credentials=(
     [rospi-4-desktop.local]="rospi:rospi"
 )
 declare -A pi_node_names=(
-    [172.23.254.18]="rospi_1"
-    [172.23.254.22]="rospi_2"
-    [172.23.254.23]="rospi_3"
-    [172.23.254.24]="rospi_4"
+    [rospi-1-desktop.local]="rospi_1"
+    [rospi-2-desktop.local]="rospi_2"
+    [rospi-3-desktop.local]="rospi_3"
+    [rospi-4-desktop.local]="rospi_4"
 )
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 BRANCH_NAME="${BRANCH_NAME:-post-develop-feature-log-parser}"
