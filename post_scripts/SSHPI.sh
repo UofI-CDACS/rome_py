@@ -102,8 +102,8 @@ for HOST in "${!pi_credentials[@]}"; do
     REMOTE_COMMAND="
         cd $WORKSPACE_FOLDER
         chmod -R +rwx .
-        source "/src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
-        source "$WORKSPACE_FOLDER/src/install/setup.bash"
+        source "./src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
+        source "./src/install/setup.bash"
         ros2 run post_station station --ros-args -r __node:=${NODE_NAME}
     "
     gnome-terminal --tab -- bash -c "echo 'Connecting to $USER_AT_HOST...'; sshpass -p '$PASSWORD' ssh -tt -o StrictHostKeyChecking=no $USER_AT_HOST '$REMOTE_COMMAND; bash'; exec bash"
