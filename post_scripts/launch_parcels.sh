@@ -81,16 +81,22 @@ fi
 cd $WORKSPACE_FOLDER
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
 source "$WORKSPACE_FOLDER/install/setup.bash"
+
+if [ -n "$PARAMS" ]; then
+    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s .)
+else
+    PARAMS_JSON="{}"
+fi
 ros2 launch post_station send_parcel_launch.py \
     PARCEL_COUNT:="$PARCEL_COUNT" \
     OWNER:="$OWNER" \
     INSTRUCTION_SET:="$INSTRUCTION_SET" \
     NEXT_LOCATION:="$NEXT_LOCATION" \
-    DATA:="$PARAMS"
-    sleep 10 # This should be adjusted to be more accurate on when the logging is done
-    if [ "$PARSE_LOGS" = true ]; then
-        python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
-    fi
+    DATA:="$PARAMS_JSON"
+sleep 10
+if [ "$PARSE_LOGS" = true ]; then
+    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
     ros2 launch post_station send_parcel_launch.py --ros-args 
