@@ -74,8 +74,8 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
-source "$WORKSPACE_FOLDER/src/install/setup.bash"
+source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
+source "$WORKSPACE_FOLDER/install/setup.bash"
 ros2 launch post_station send_parcel_launch.py --ros-args \
     -p parcel_count:=$PARCEL_COUNT \
     -p owner:="$OWNER" \
@@ -90,6 +90,7 @@ if [ "$LOOP_INFINITELY" = "TRUE" ]; then
     ros2 launch post_station send_parcel_launch.py --ros-args \
         -p parcel_count:=$PARCEL_COUNT \
         -p owner:="$OWNER" \
+        -p next_location:="$NEXT_LOCATION" \
         -p INSTRUCTION_SET:="$INSTRUCTION_SET" \
         -p data:="$PARAMS"
     sleep 5 # This should be adjusted to be more accurate on when the logging is done
