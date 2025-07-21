@@ -2,7 +2,8 @@
    <Domain>
      <General>
         <Interfaces>
-          <NetworkInterface name="usb0" />
+          <NetworkInterface name="eth0" />
+          <NetworkInterface name="lo" />
           <NetworkInterface name="wlan0" />
         </Interfaces>
     </General>
