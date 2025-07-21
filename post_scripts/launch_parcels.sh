@@ -23,6 +23,11 @@ INSTRUCTION_SET="${INSTRUCTION_SET:-default}"
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
 NEXT_LOCATION="${NEXT_LOCATION:-rospi_1}"
+        -p parcel_count:=$PARCEL_COUNT \
+        -p owner:="$OWNER" \
+        -p next_location:="$NEXT_LOCATION" \
+        -p INSTRUCTION_SET:="$INSTRUCTION_SET" \
+        -p data:="$PARAMS"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="DDS Config":CB "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
@@ -77,10 +82,11 @@ cd $WORKSPACE_FOLDER
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
 source "$WORKSPACE_FOLDER/install/setup.bash"
 ros2 launch post_station send_parcel_launch.py --ros-args \
-    -p parcel_count:=$PARCEL_COUNT \
-    -p owner:="$OWNER" \
-    -p INSTRUCTION_SET:="$INSTRUCTION_SET" \
-    -p data:="$PARAMS"
+    "-p parcel_count:=$PARCEL_COUNT" \
+    "-p owner:=$OWNER" \
+    "-p next_location:=$NEXT_LOCATION" \
+    "-p INSTRUCTION_SET:=$INSTRUCTION_SET" \
+    "-p data:=$PARAMS"
     sleep 10 # This should be adjusted to be more accurate on when the logging is done
     if [ "$PARSE_LOGS" = true ]; then
         python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"

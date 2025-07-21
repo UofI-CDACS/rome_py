@@ -4,25 +4,28 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 import uuid
+from launch.actions import SetEnvironmentVariable
 
 def generate_launch_description():
     #hostnames = ['rospi-1-desktop', 'rospi-2-desktop', 'rospi-3-desktop', 'rospi-4-desktop']  # simulated hostnames
     #stations = [hostname.replace('-', '_') + '/station_default' for hostname in hostnames]
     parcels = []
-    parcel_count = int(LaunchConfiguration('parcel_count').perform({}))
-    owner = LaunchConfiguration('owner').perform({})
-    next_location = LaunchConfiguration('next_location').perform({})
-    instruction_set = LaunchConfiguration('INSTRUCTION_SET').perform({})
-    data = json.loads(LaunchConfiguration('data').perform({}))
-    for i in range(parcel_count):
+    PARCEL_COUNT = int(LaunchConfiguration('PARCEL_COUNT', default='1').perform({}))
+    OWNER = LaunchConfiguration('OWNER', default='Owner').perform({})
+    INSTRUCTION_SET = LaunchConfiguration('INSTRUCTION_SET', default='default').perform({})
+    NEXT_LOCATION = LaunchConfiguration('NEXT_LOCATION', default='rospi_1').perform({})
+    DATA = LaunchConfiguration('DATA', default='{}').perform({})
+    # Generate parcels
+    data = json.loads(DATA)
+    for i in range(PARCEL_COUNT):
         parcels.append({
             'parcel_id': str(uuid.uuid4()),
-            'owner_id': owner,
+            'owner_id': OWNER,
             'prev_location': 'master',
-            'next_location': next_location,
-            'instruction_set': instruction_set,
+            'next_location': NEXT_LOCATION,
+            'instruction_set': INSTRUCTION_SET,
             'data': data
-            })
+        })
 
     parcels_json = json.dumps(parcels)
 
