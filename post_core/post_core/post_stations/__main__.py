@@ -1,9 +1,9 @@
 import sys
 import argparse
+import asyncio
 import rclpy
 from rclpy.utilities import remove_ros_args
 from .registry import get_station_class  
-from .stations import *  # Ensure stations are registered
 
 def main():
     argv = remove_ros_args(sys.argv)
@@ -20,11 +20,16 @@ def main():
 
     rclpy.init()
     node = station_cls(name=args.name)
-    try:
-        rclpy.spin(node)
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+    async def runner():
+        try:
+            while rclpy.ok():
+                rclpy.spin_once(node, timeout_sec=0.1)
+                await asyncio.sleep(0)  # let async tasks progress
+        finally:
+            node.destroy_node()
+            rclpy.shutdown()
+
+    asyncio.run(runner())
 
 if __name__ == "__main__":
     main()

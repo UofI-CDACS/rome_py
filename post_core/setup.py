@@ -9,11 +9,6 @@ setup(
     version='0.0.1',
     packages=[package_name],
     data_files=[
-        # Install all YAML instruction sets
-        (
-            f'share/{package_name}/config/instruction_sets',
-            glob.glob(os.path.join('config', 'instruction_sets', '*.yaml'))
-        ),
         # Install all launch files
         (
           f'share/{package_name}/launch',

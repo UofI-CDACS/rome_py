@@ -1,2 +1,4 @@
-from .default import DefaultStation  # auto-register if needed
+from .default import DefaultStation
+from .sender import SenderStation
+from .graveyard import GraveyardStation
 

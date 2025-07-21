@@ -1,5 +1,6 @@
 from .base import Station
 from .registry import register_station, get_station_class
+from .stations import *  # Ensure stations are registered
 from .types import StationResult, StationSignal
 # post_stations/__init__.py
 #from .base import Station, StationResult, StationSignal

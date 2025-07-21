@@ -6,7 +6,7 @@ ActionHandler = Callable[..., Awaitable[Any]]
 
 def action(func: Callable[..., Any]) -> Callable[..., ActionHandler]:
     """
-    Decorator to wrap a function into an action factory that returns
+    Wrapper for a function into an action factory that returns
     an async runner with station and parcel bound.
     """
     def factory(station: Node, parcel: Any) -> ActionHandler:

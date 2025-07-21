@@ -5,7 +5,7 @@ from post_interfaces.msg import Parcel
 
 class Station(Node):
     def __init__(self, name=None):
-        super().__init__(f'station_{name}' or 'station_base')
+        super().__init__(f'{name}' or 'station_base')
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
         self.subscription = self.create_subscription(
@@ -22,13 +22,12 @@ class Station(Node):
         return self._pub_cache[topic_name]
 
     def send_parcel(self, parcel, next_location: str):
-        parcel.prev_location = self.this_station
-        parcel.next_location = next_location
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic)
         publisher.publish(parcel)
 
     def _on_parcel_received(self, parcel):
+        self.get_logger().info(f"Parcel received callback triggered for parcel {parcel.parcel_id}")
         asyncio.ensure_future(self.parcel_callback(parcel))
 
     async def parcel_callback(self, parcel: Parcel):

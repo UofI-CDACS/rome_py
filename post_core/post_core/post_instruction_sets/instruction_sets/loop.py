@@ -1,5 +1,7 @@
-from post_instruction_sets import InstructionSet, register_instruction_set, InstructionResult, InstructionSignal
-from post_actions.registry import get_action
+from ...post_actions.registry import get_action
+from ..base import InstructionSet
+from ..types import InstructionResult, InstructionSignal
+from ..registry import register_instruction_set
 
 @register_instruction_set("loop")
 class LoopInstructionSet(InstructionSet):
@@ -7,10 +9,10 @@ class LoopInstructionSet(InstructionSet):
 
     async def run(self, station, parcel) -> InstructionResult:
         # Bind actions to this station and parcel
-        dec_ttl = get_action("decrement_data_key")(station, parcel)
-        log_parcel = get_action("file_log_parcel")(station, parcel)
-        check_ttl = get_action("check_ttl")(station, parcel)
-        forward = get_action("forward")(station, parcel)
+        dec_ttl = get_action('decrement_data_key')(station, parcel)
+        log_parcel = get_action('file_log_parcel')(station, parcel)
+        check = get_action('check_ttl')(station, parcel)
+        fwd = get_action('forward')(station, parcel)
 
         # Map current station to the next destination
         next_map = {
@@ -23,9 +25,9 @@ class LoopInstructionSet(InstructionSet):
         name = station.get_name().split("/")[-1]
 
         await dec_ttl(key="ttl")
-        await log_parcel(log_path="~/test_ws")
+        await log_parcel(log_path=f"~/test_ws/loop/{station.this_station}")
 
-        if not await check_ttl(key="ttl"):
+        if not await check(key="ttl"):
             return InstructionResult(signal=InstructionSignal.GRAVEYARD)
 
         destination = next_map.get(name)

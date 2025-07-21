@@ -1,15 +1,20 @@
 from typing import Dict, Callable, Any
 from .base import ActionHandler
+from .base import action
 
-_action_registry: Dict[str, Callable[..., ActionHandler]] = {}
+_registry: Dict[str, Callable[..., ActionHandler]] = {}
 
 def register_action(name: str):
     def decorator(func: Callable[..., ActionHandler]):
-        if name in _action_registry:
+        wrapped_func = action(func)
+        if name in _registry:
             raise ValueError(f"Action '{name}' already registered")
-        _action_registry[name] = func
-        return func
+        _registry[name] = wrapped_func
+        return wrapped_func
     return decorator
 
 def get_action(name: str) -> Callable[..., ActionHandler]:
-    return _action_registry.get(name)
+    cls = _registry.get(name)
+    if cls is None:
+        raise ValueError(f"Action type '{name}' is not registered.")
+    return cls
