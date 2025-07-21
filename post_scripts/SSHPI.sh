@@ -56,8 +56,9 @@ if [ ! -d post ]; then
 fi
 cd post
 git checkout $BRANCH_NAME
-echo "BRANCH_NAME is: '$BRANCH_NAME'"
-GIT_OUTPUT=$(git pull -f)
+git fetch --all
+git reset --hard origin/$BRANCH_NAME
+GIT_OUTPUT=\$(git pull -f)
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     cd $WORKSPACE_FOLDER
     echo \"$password\" | sudo rm -rf build install log
@@ -79,6 +80,8 @@ for ip in "${!pi_credentials[@]}"; do
         fi
         cd post
         git checkout $BRANCH_NAME
+        git fetch --all
+        git reset --hard origin/$BRANCH_NAME
         GIT_OUTPUT=\$(git pull -f)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
