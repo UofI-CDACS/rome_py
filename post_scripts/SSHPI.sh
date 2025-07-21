@@ -101,7 +101,7 @@ for HOST in "${!pi_credentials[@]}"; do
     NODE_NAME="${pi_node_names[$HOST]}"
     REMOTE_COMMAND="
         cd $WORKSPACE_FOLDER
-        tree
+        chmod -R +rwx .
         source "/src/post/post_scripts/$DDS_CONFIG" < <(echo "$WORKSPACE_FOLDER/src/post/post_scripts/")
         source "$WORKSPACE_FOLDER/src/install/setup.bash"
         ros2 run post_station station --ros-args -r __node:=${NODE_NAME}
