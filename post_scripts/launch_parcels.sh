@@ -22,7 +22,7 @@ OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-default}"
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
-NEXT_LOCATION="${NEXT_LOCATION:-rospi_1}"
+NEXT_LOCATION="${NEXT_LOCATION:-[rospi_1]}"
         -p parcel_count:=$PARCEL_COUNT \
         -p owner:="$OWNER" \
         -p next_location:="$NEXT_LOCATION" \
@@ -87,24 +87,28 @@ if [ -n "$PARAMS" ]; then
 else
     PARAMS_JSON="{}"
 fi
-ros2 launch post_station send_parcel_launch.py \
-    PARCEL_COUNT:="$PARCEL_COUNT" \
-    OWNER:="$OWNER" \
-    INSTRUCTION_SET:="$INSTRUCTION_SET" \
-    NEXT_LOCATION:="$NEXT_LOCATION" \
-    DATA:="$PARAMS_JSON"
+
+ros2 run post_core station --type sender --name loop_sender --ros-args \
+    -p count:=$PARCEL_COUNT \
+    -p owner_id:="$OWNER" \
+    -p mode:="round_robin" \
+    -p destinations:="$NEXT_LOCATION" \
+    -p instruction_set:="$INSTRUCTION_SET" \
+    -p data:="$PARAMS_JSON"
+
 sleep 10
 if [ "$PARSE_LOGS" = true ]; then
     python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
 fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
-    ros2 launch post_station send_parcel_launch.py --ros-args 
-        -p parcel_count:=$PARCEL_COUNT 
-        -p owner:="$OWNER" 
-        -p next_location:="$NEXT_LOCATION" 
-        -p INSTRUCTION_SET:="$INSTRUCTION_SET" 
-        -p data:="$PARAMS"
+    ros2 run post_core station --type sender --name loop_sender --ros-args \
+        -p count:=$PARCEL_COUNT \
+        -p owner_id:="$OWNER" \
+        -p mode:="round_robin" \
+        -p destinations:="$NEXT_LOCATION" \
+        -p instruction_set:="$INSTRUCTION_SET" \
+        -p data:="$PARAMS_JSON"
     sleep 5 # This should be adjusted to be more accurate on when the logging is done
     if [ "$PARSE_LOGS" = true ]; then
         python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
