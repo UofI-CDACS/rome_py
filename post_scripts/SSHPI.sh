@@ -58,8 +58,9 @@ cd post
 git checkout $BRANCH_NAME
 git fetch --all
 git reset --hard origin/$BRANCH_NAME
-GIT_OUTPUT=$(git pull)
+GIT_OUTPUT=$(git pull origin $BRANCH_NAME)
 #if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
+password="${pi_credentials[rospi-1-desktop.local]#*:}"
 cd $WORKSPACE_FOLDER
 echo \"$password\" | sudo rm -rf build install log
 source /opt/ros/jazzy/setup.bash
@@ -71,8 +72,6 @@ colcon build --symlink-install
 for ip in "${!pi_credentials[@]}"; do
     creds="${pi_credentials[$ip]}"
     username="${creds%%:*}"
-    password="${creds#*:}"
-
     sshpass -p "$password" ssh -tt -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
         cd $WORKSPACE_FOLDER/src
         if [ ! -d post ]; then
@@ -82,7 +81,7 @@ for ip in "${!pi_credentials[@]}"; do
         git checkout $BRANCH_NAME
         git fetch --all
         git reset --hard origin/$BRANCH_NAME
-        GIT_OUTPUT=$(git pull)
+        GIT_OUTPUT=$(git pull origin $BRANCH_NAME)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
             source /opt/ros/jazzy/setup.bash
