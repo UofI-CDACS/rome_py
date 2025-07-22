@@ -1,7 +1,9 @@
 import json
-from post_instruction_sets import InstructionSet, register_instruction_set, InstructionResult, InstructionSignal
-from post_actions.registry import get_action
-from ..registry import register_instruction_set 
+from ...post_actions.registry import get_action
+from ..base import InstructionSet
+from ..types import InstructionResult, InstructionSignal
+from ..registry import register_instruction_set
+
 
 def get_parcel_data_value(parcel, key, default=None):
     for kv in parcel.data:
