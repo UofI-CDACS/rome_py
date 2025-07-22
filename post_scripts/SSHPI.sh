@@ -59,14 +59,14 @@ git checkout $BRANCH_NAME
 git fetch --all
 git reset --hard origin/$BRANCH_NAME
 GIT_OUTPUT=$(git pull)
-if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
-    cd $WORKSPACE_FOLDER
-    echo \"$password\" | sudo rm -rf build install log
-    source /opt/ros/jazzy/setup.bash
-    colcon build --symlink-install
-else
-    echo "No changes to pull. Skipping colcon build."
-fi
+#if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
+cd $WORKSPACE_FOLDER
+echo \"$password\" | sudo rm -rf build install log
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install
+#else
+#    echo "No changes to pull. Skipping colcon build."
+#fi
 # Then run the steps remotely
 for ip in "${!pi_credentials[@]}"; do
     creds="${pi_credentials[$ip]}"
