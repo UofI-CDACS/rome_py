@@ -107,7 +107,7 @@ for HOST in "${!pi_credentials[@]}"; do
         chmod -R +rwx .
         source "./src/post/post_scripts/$DDS_CONFIG"
         source "$WORKSPACE_FOLDER/install/setup.bash"
-        ros2 run post_station station --ros-args -r __node:=${NODE_NAME}
+        ros2 run post_core station --name ${NODE_NAME} --type default
     "
     gnome-terminal --tab -- bash -c "echo 'Connecting to $USER_AT_HOST...'; sshpass -p '$PASSWORD' ssh -tt -o StrictHostKeyChecking=no $USER_AT_HOST '$REMOTE_COMMAND; bash'; exec bash"
 done
