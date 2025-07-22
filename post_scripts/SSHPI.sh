@@ -72,7 +72,7 @@ colcon build --symlink-install
 for ip in "${!pi_credentials[@]}"; do
     creds="${pi_credentials[$ip]}"
     username="${creds%%:*}"
-    sshpass -p "$password" ssh -tt -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
+    sshpass -p "$password" ssh -A -tt -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
         cd $WORKSPACE_FOLDER/src
         if [ ! -d post ]; then
             git clone https://github.com/UofI-CDACS/rome_py.git post
