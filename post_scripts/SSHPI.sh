@@ -58,8 +58,8 @@ cd post
 git checkout $BRANCH_NAME
 git fetch --all
 git reset --hard origin/$BRANCH_NAME
-GIT_OUTPUT=$(git pull $BRANCH_NAME)
-if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
+GIT_OUTPUT=$(git pull)
+if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     cd $WORKSPACE_FOLDER
     echo \"$password\" | sudo rm -rf build install log
     source /opt/ros/jazzy/setup.bash
