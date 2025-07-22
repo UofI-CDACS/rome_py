@@ -38,13 +38,13 @@ def fetch_logs_from_hosts(ip_list, username, password, remote_log_dir, local_sav
 
 def parse_log_file(LOG_DIR):
     new_metrics = {}
-    for fileame in os.listdir(LOG_DIR):
+    for filename in os.listdir(LOG_DIR):
         log_data = []
-        match = LOG_PATTERN.match(fileame)
+        match = LOG_PATTERN.match(filename)
         if match:
             log_id = match.group('ID')
             pi = match.group('PI')
-            file_path = os.path.join(LOG_DIR, fileame)
+            file_path = os.path.join(LOG_DIR, filename)
             if os.path.isfile(LOG_DIR + '/' + f'log-{log_id}.csv'):
                 with open(file_path, 'r') as file:
                     for line in file:

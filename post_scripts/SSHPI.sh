@@ -29,7 +29,7 @@ declare -A pi_node_names=(
     [rospi-4-desktop.local]="rospi_4"
 )
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
-BRANCH_NAME="${BRANCH_NAME:-post-develop-feature-log-parser}"
+BRANCH_NAME="${BRANCH_NAME:-post-develop-branch_merging}"
 DDS_CONFIG="${DDS_CONFIG:-cyclonedds.xml}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
@@ -55,9 +55,9 @@ if [ ! -d post ]; then
     git clone https://github.com/UofI-CDACS/rome_py.git post
 fi
 cd post
-git checkout $BRANCH_NAME
-git fetch --all
-git reset --hard origin/$BRANCH_NAME
+#git checkout $BRANCH_NAME
+#git fetch --all
+#git reset --hard origin/$BRANCH_NAME
 GIT_OUTPUT=$(git pull)
 if [[ "$GIT_OUTPUT" != "Already up to date." ]]; then
     cd $WORKSPACE_FOLDER
@@ -79,9 +79,9 @@ for ip in "${!pi_credentials[@]}"; do
             git clone https://github.com/UofI-CDACS/rome_py.git post
         fi
         cd post
-        git checkout $BRANCH_NAME
-        git fetch --all
-        git reset --hard origin/$BRANCH_NAME
+        #git checkout $BRANCH_NAME
+        #git fetch --all
+        #git reset --hard origin/$BRANCH_NAME
         GIT_OUTPUT=$(git pull)
         cd $WORKSPACE_FOLDER
         if [[ \"\$GIT_OUTPUT\" != \"Already up to date.\" ]]; then
