@@ -10,10 +10,10 @@ LOG_PATTERN = re.compile(r'log-(?P<ID>[^-]+)-(?P<PI>[^.]+)\.txt')
 DATA_PATTERN = re.compile(r'(\w+)=([^;]+)')
 metrics = ['TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET']
 ip_list = [
-    'rospi-1-desktop.local',
-    'rospi-2-desktop.local',
-    'rospi-3-desktop.local',
-    'rospi-4-desktop.local'
+    '172.23.254.18',
+    '172.23.254.22',
+    '172.23.254.23',
+    '172.23.254.24'
 ]
 
 def fetch_logs_from_hosts(ip_list, username, password, remote_log_dir, local_save_dir):
