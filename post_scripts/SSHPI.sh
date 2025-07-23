@@ -17,16 +17,16 @@ if ! command -v yad &> /dev/null; then
 fi
 # Users, hosts, and passwords
 declare -A pi_credentials=(
-    [rospi-1-desktop.local]="rospi:rospi"
-    [rospi-2-desktop.local]="rospi:rospi"
-    [rospi-3-desktop.local]="rospi:rospi"
-    [rospi-4-desktop.local]="rospi:rospi"
+    [172.23.254.18]="rospi:rospi"
+    [172.23.254.22]="rospi:rospi"
+    [172.23.254.23]="rospi:rospi"
+    [172.23.254.24]="rospi:rospi"
 )
 declare -A pi_node_names=(
-    [rospi-1-desktop.local]="rospi_1"
-    [rospi-2-desktop.local]="rospi_2"
-    [rospi-3-desktop.local]="rospi_3"
-    [rospi-4-desktop.local]="rospi_4"
+    [172.23.254.18]="rospi_1"
+    [172.23.254.22]="rospi_2"
+    [172.23.254.23]="rospi_3"
+    [172.23.254.24]="rospi_4"
 )
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 BRANCH_NAME="${BRANCH_NAME:-post-develop-branch_merging}"
