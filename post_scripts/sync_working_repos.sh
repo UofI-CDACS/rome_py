@@ -5,7 +5,7 @@ set -euo pipefail
 BARE_REPO_DIR="/home/rospi/Desktop/rome_py_bare_repo"
 WORKING_REPO_DIR="/home/rospi/Desktop/rome_py"
 #HOSTS=("rospi-0-desktop" "rospi-0-desktop" "rospi-2-desktop" "rospi-3-desktop" "rospi-4-desktop")
-HOSTS=("172.23.254.20","172.23.254.24","172.23.254.22","172.23.254.23","172.23.254.18")
+HOSTS=("172.23.254.20" "172.23.254.24" "172.23.254.22" "172.23.254.23" "172.23.254.18")
 BRANCH="main"
 FORCE_CLONE=false
 
