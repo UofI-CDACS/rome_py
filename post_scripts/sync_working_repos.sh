@@ -39,7 +39,7 @@ done
 for HOST in "${HOSTS[@]}"; do
   echo "==> Processing $HOST..."
 
-  ssh "rospi@$HOST" bash -c "'
+  ssh -A "rospi@$HOST" bash -c "'
     set -e
     REPO=\"$WORKING_REPO_DIR\"
     BARE_REPO_SSH=\"ssh://rospi@rospi-0-desktop$BARE_REPO_DIR\"
