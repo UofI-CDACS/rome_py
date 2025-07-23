@@ -117,7 +117,7 @@ def parse_graveyard_logs(graveyard_dir):
                     writer.writerows(log_data)
 
 def main():
-    #fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
+    fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
     parse_graveyard_logs('./graveyard')
 

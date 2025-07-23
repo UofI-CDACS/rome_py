@@ -25,7 +25,7 @@ class LoopInstructionSet(InstructionSet):
         name = station.get_name().split("/")[-1]
 
         await dec_ttl(key="ttl")
-        await log_parcel(log_path=f"~/test_ws/loop/{station.this_station}")
+        await log_parcel(log_path=f"~/Desktop/test_ws/loop/{station.this_station}")
 
         if not await check(key="ttl"):
             return InstructionResult(signal=InstructionSignal.GRAVEYARD)
