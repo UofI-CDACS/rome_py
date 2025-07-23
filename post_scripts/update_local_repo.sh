@@ -5,10 +5,11 @@
 set -euo pipefail
 
 # Defaults
-BARE_REPO_DIR="/\$HOME/Desktop/test_ws/post.git"
+BARE_REPO_DIR="/\$HOME/Desktop/rome_py_bare_repo"
 GITHUB_REPO="git@github.com:UofI-CDACS/rome_py.git"
 BRANCH="main"
 COMMIT=""
+FORCE_REINIT=false
 
 usage() {
   cat <<EOF
@@ -18,6 +19,7 @@ Usage: $0 [-b bare_repo_dir] [-r github_repo] [-B branch] [-c commit]
   -r  GitHub repo URL (default: $GITHUB_REPO)
   -B  Branch to fetch (default: $BRANCH)
   -c  Specific commit hash (optional)
+  -f  Force reinitialization of the bare repo if it already exists (deletes the existing repo)
 
 Example:
   $0 -b $BARE_REPO_DIR -r $GITHUB_REPO -B post-develop -c abc123
@@ -32,13 +34,26 @@ while getopts ":b:r:B:c:h" opt; do
   r) GITHUB_REPO="$OPTARG" ;;
   B) BRANCH="$OPTARG" ;;
   c) COMMIT="$OPTARG" ;;
+  f) FORCE_REINIT=true ;;
   h) usage ;;
   *) usage ;;
   esac
 done
 
-# Step 1: Create bare repo if missing
-if [ ! -d "$BARE_REPO_DIR" ]; then
+# Step 1: Check and create bare repo if missing or force reinit
+if [ -d "$BARE_REPO_DIR" ]; then
+  if ! git --git-dir="$BARE_REPO_DIR" rev-parse --is-bare-repository &>/dev/null; then
+    if [ "$FORCE_REINIT" = true ]; then
+      echo "Force reinitializing bare repo at $BARE_REPO_DIR"
+      rm -rf "$BARE_REPO_DIR"
+      git init --bare "$BARE_REPO_DIR"
+    else
+      echo "Error: '$BARE_REPO_DIR' exists but is not a valid bare Git repository."
+      echo "       Use -f to force reinitialization."
+      exit 1
+    fi
+  fi
+else
   echo "Creating bare repo at $BARE_REPO_DIR"
   git init --bare "$BARE_REPO_DIR"
 fi
