@@ -89,7 +89,7 @@ if [ "$BUILD_WORKSPACE" = "TRUE" ]; then
     for ip in "${!pi_credentials[@]}"; do
         creds="${pi_credentials[$ip]}"
         username="${creds%%:*}"
-        sshpass -p "$password" ssh -A -tt -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
+        ssh -A -tt -o StrictHostKeyChecking=no "${username}@${ip}" bash -c "'
             cd $WORKSPACE_FOLDER
             source /opt/ros/jazzy/setup.bash
             rm -rf build install log
