@@ -13,7 +13,7 @@ OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
-NEXT_LOCATION="${NEXT_LOCATION:-['rospi_1','rospi_2','rospi_3','rospi_4']}"
+NEXT_LOCATION="${NEXT_LOCATION:-rospi_1"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
@@ -89,7 +89,7 @@ fi
 if [ -n "$PARAMS" ]; then
     PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + [{"key": "ttl", "val": "'$TTL_VALUE'"}]')
 else
-    PARAMS_JSON=[{"key": "ttl", "val": "'$TTL_VALUE'"}]
+    PARAMS_JSON="[{"key": "ttl", "val": "'$TTL_VALUE'"}]"
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
