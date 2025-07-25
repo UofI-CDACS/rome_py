@@ -13,7 +13,7 @@ OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
-NEXT_LOCATION="${NEXT_LOCATION:-rospi_1"
+NEXT_LOCATION="${NEXT_LOCATION:-rospi_1}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
