@@ -10,7 +10,6 @@
                 <NetworkInterface name="eth0" multicast="true" />
             </Interfaces>
         </General>
-      <Domain>
       <Discovery>
         <Peers>
           <Peer address="172.23.254.20"/>
