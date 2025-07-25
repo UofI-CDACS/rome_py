@@ -5,7 +5,7 @@ WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 STATION_NAME="${STATION_NAME:-owner_station}"
 MODE="${MODE:-round_robin}"
 COUNT="${COUNT:-20}"
-INTERVAL_SEC="${INTERVAL_SEC:-0.1}"
+INTERVAL_MS="${INTERVAL_MS:-1000}"
 TTL_VALUE="${TTL_VALUE:-10}"
 DDS_CONFIG="${DDS_CONFIG:-cyclone_source.sh}"
 PARCEL_COUNT="${PARCEL_COUNT:-1}"
@@ -17,12 +17,12 @@ NEXT_LOCATION="${NEXT_LOCATION:-['rospi_1','rospi_2','rospi_3','rospi_4']}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
-    --field="Mode":CB "round_robin!random!once" "$MODE" \
-    --field="Count":NUM \
-    --field="Interval (sec)":NUM  \
-    --field="TTL Value":NUM \
-    --field="DDS Config":CB "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
-    --field="Parcel Count":NUM \
+    --field="Mode":CB "round_robin!random!once" \
+    --field="DDS Config":CB "cyclone_source.sh!fast_source.sh"\
+    --field="Count":NUM "$COUNT" \
+    --field="Interval (ms)":NUM "$INTERVAL_MS" \
+    --field="TTL Value":NUM "$TTL_VALUE" \
+    --field="Parcel Count":NUM "$PARCEL_COUNT" \
     --field="Owner":TXT "$OWNER" \
     --field="Instruction Set":TXT "$INSTRUCTION_SET" \
     --field="Next Location":TXT "$NEXT_LOCATION" \
@@ -42,7 +42,11 @@ if [ -z "$FORM_OUTPUT" ]; then
 fi
 
 
-IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE COUNT INTERVAL_SEC TTL_VALUE DDS_CONFIG PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS <<< "$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG COUNT INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS <<< "$FORM_OUTPUT"
+
+# Convert INTERVAL_MS to INTERVAL_SEC
+INTERVAL_SEC=$((INTERVAL_MS / 1000))
+
 echo "Parameters received:"
 echo "WORKSPACE_FOLDER: $WORKSPACE_FOLDER"
 echo "STATION_NAME: $STATION_NAME"
