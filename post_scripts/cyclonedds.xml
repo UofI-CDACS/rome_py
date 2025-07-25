@@ -1,15 +1,8 @@
 <CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
     <Domain Id="any">
-        <General>
-            <Interfaces>
-                <!--
-                    NOTE
-                    Select the localhost interface.
-                    multicast can be any of true/false/default.
-                -->
-                <NetworkInterface name="eth0" multicast="true" />
-            </Interfaces>
-        </General>
+  <General>
+    <AllowMulticast>true</AllowMulticast>
+  </General>
       <Discovery>
         <Peers>
           <Peer address="172.23.254.20"/>
