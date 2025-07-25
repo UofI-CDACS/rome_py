@@ -5,10 +5,10 @@ WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 STATION_NAME="${STATION_NAME:-owner_station}"
 MODE="${MODE:-round_robin}"
 COUNT="${COUNT:-20}"
-INTERVAL_MS="${INTERVAL_MS:-1000}"
+INTERVAL_MS="${INTERVAL_MS:-100}"
 TTL_VALUE="${TTL_VALUE:-10}"
 DDS_CONFIG="${DDS_CONFIG:-cyclone_source.sh}"
-PARCEL_COUNT="${PARCEL_COUNT:-1}"
+PARCEL_COUNT="${PARCEL_COUNT:-100}"
 OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
@@ -99,7 +99,7 @@ ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
     -p interval_sec:=$INTERVAL_SEC \
     -p owner_id:="$OWNER" \
     -p instruction_set:="$INSTRUCTION_SET" \
-    #-p data:="$PARAMS_JSON"
+    -p data:="$PARAMS_JSON"
 
 sleep 10
 if [ "$PARSE_LOGS" = true ]; then
