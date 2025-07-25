@@ -4,7 +4,6 @@ WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 # Default values for the new parameters
 STATION_NAME="${STATION_NAME:-owner_station}"
 MODE="${MODE:-round_robin}"
-COUNT="${COUNT:-20}"
 INTERVAL_MS="${INTERVAL_MS:-100}"
 TTL_VALUE="${TTL_VALUE:-10}"
 DDS_CONFIG="${DDS_CONFIG:-cyclone_source.sh}"
@@ -19,7 +18,6 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Station Name":TXT "$STATION_NAME" \
     --field="Mode":CB "round_robin!random!once" \
     --field="DDS Config":CB "cyclone_source.sh!fast_source.sh"\
-    --field="Count":NUM "$COUNT" \
     --field="Interval (ms)":NUM "$INTERVAL_MS" \
     --field="TTL Value":NUM "$TTL_VALUE" \
     --field="Parcel Count":NUM "$PARCEL_COUNT" \
@@ -42,7 +40,7 @@ if [ -z "$FORM_OUTPUT" ]; then
 fi
 
 
-IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG COUNT INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS <<< "$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS <<< "$FORM_OUTPUT"
 
 # Convert INTERVAL_MS to INTERVAL_SEC
 INTERVAL_SEC=$(echo "scale=3; $INTERVAL_MS / 1000" | bc)

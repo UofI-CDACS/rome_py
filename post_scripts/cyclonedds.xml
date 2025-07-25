@@ -1,10 +1,19 @@
-<CycloneDDS>
-  <Domain>
-    <General>
-      <Interfaces>
-       <NetworkInterface name="eth0" multicast="true" />
-      </Interfaces>
-      <EnableMulticastLoopback>true</EnableMulticastLoopback>
-    </General>
-  </Domain>
+<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+    <Domain Id="any">
+        <General>
+            <Interfaces>
+                <!--
+                    NOTE
+                    Select the localhost interface.
+                    multicast can be any of true/false/default.
+                -->
+                <NetworkInterface address="127.0.0.1" multicast="true" />
+                <!--
+                  REQUIRES UPDATE
+                  IP address of the network interface we want to use.
+                -->
+                <NetworkInterface address="172.23.254.0/28" multicast="true" />
+            </Interfaces>
+        </General>
+    </Domain>
 </CycloneDDS>
