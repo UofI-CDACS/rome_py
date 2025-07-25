@@ -18,6 +18,7 @@ ip_list = [
     '172.23.254.23',
     '172.23.254.24'
 ]
+
 def fetch_logs_from_hosts(ip_list, username, password, remote_log_dir, local_save_dir):
     def download_directory(sftp, remote_dir, local_dir):
         """Recursively download a directory and its contents"""
@@ -71,6 +72,8 @@ def fetch_logs_from_hosts(ip_list, username, password, remote_log_dir, local_sav
 
 def parse_log_file(LOG_DIR):
     new_metrics = {}
+    csv_files_written = set()  # Track which CSV files we've already written to
+    
     for root, dirs, files in os.walk(LOG_DIR):
         for filename in files:
             match = LOG_PATTERN.match(filename)
@@ -102,16 +105,22 @@ def parse_log_file(LOG_DIR):
                                 log_entry = dict(zip(new_metrics[log_id], parts))
                                 log_data.append(log_entry)
                 
-                # Write all data at once
-                write_header = not os.path.isfile(csv_path) or os.path.getsize(csv_path) == 0
-                with open(csv_path, 'a', newline='') as csvfile:
+                # Determine write mode: overwrite first time, append subsequent times
+                write_mode = 'w' if csv_path not in csv_files_written else 'a'
+                write_header = csv_path not in csv_files_written
+                
+                with open(csv_path, write_mode, newline='') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=new_metrics[log_id])
                     if write_header:
                         writer.writeheader()
                     writer.writerows(log_data)
+                
+                csv_files_written.add(csv_path)
 
 def parse_graveyard_logs(graveyard_dir):
     graveyard_metrics = {}
+    csv_files_written = set()  # Track which CSV files we've already written to
+    
     for root, dirs, files in os.walk(graveyard_dir):
         for filename in files:
             match = LOG_PATTERN.match(filename)
@@ -143,11 +152,17 @@ def parse_graveyard_logs(graveyard_dir):
                                 log_entry = dict(zip(graveyard_metrics[log_id], parts))
                                 log_data.append(log_entry)
                 
-                # Write graveyard data (overwrite, don't append)
-                with open(csv_path, 'w', newline='') as csvfile:
+                # Determine write mode: overwrite first time, append subsequent times
+                write_mode = 'w' if csv_path not in csv_files_written else 'a'
+                write_header = csv_path not in csv_files_written
+                
+                with open(csv_path, write_mode, newline='') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=graveyard_metrics[log_id])
-                    writer.writeheader()
+                    if write_header:
+                        writer.writeheader()
                     writer.writerows(log_data)
+                
+                csv_files_written.add(csv_path)
 
 def main():
     fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
