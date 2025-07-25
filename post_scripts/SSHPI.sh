@@ -52,10 +52,16 @@ if [ "$PULL_GITHUB" = "TRUE" ]; then
         git clone https://github.com/UofI-CDACS/rome_py.git post
     fi
     cd post
-    git checkout $BRANCH_NAME
     git fetch --all
-    git reset --hard origin/$BRANCH_NAME
-    GIT_OUTPUT=$(git pull origin $BRANCH_NAME)
+
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [ "$CURRENT_BRANCH" != "$BRANCH_NAME" ]; then
+        git checkout $BRANCH_NAME
+    fi
+    if [ ! git diff --quiet origin/$BRANCH_NAME ]; then
+        git reset --hard origin/$BRANCH_NAME
+    fi
+    
     # Run on remote PIs
     for ip in "${!pi_credentials[@]}"; do
         creds="${pi_credentials[$ip]}"
@@ -66,10 +72,14 @@ if [ "$PULL_GITHUB" = "TRUE" ]; then
                 git clone https://github.com/UofI-CDACS/rome_py.git post
             fi
             cd post
-            git checkout $BRANCH_NAME
             git fetch --all
-            git reset --hard origin/$BRANCH_NAME
-            git pull origin $BRANCH_NAME
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            if [ "$CURRENT_BRANCH" != "$BRANCH_NAME" ]; then
+                git checkout $BRANCH_NAME
+            fi
+            if [ ! git diff --quiet origin/$BRANCH_NAME ]; then
+                git reset --hard origin/$BRANCH_NAME
+            fi
         '"
         echo "Git pull completed on $ip"
     done
