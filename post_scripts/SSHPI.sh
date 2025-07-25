@@ -58,10 +58,8 @@ if [ "$PULL_GITHUB" = "TRUE" ]; then
     if [ "$CURRENT_BRANCH" != "$BRANCH_NAME" ]; then
         git checkout $BRANCH_NAME
     fi
-    if [ ! git diff --quiet origin/$BRANCH_NAME ]; then
-        git reset --hard origin/$BRANCH_NAME
-    fi
-    
+    git reset --hard origin/$BRANCH_NAME
+    git pull origin $BRANCH_NAME
     # Run on remote PIs
     for ip in "${!pi_credentials[@]}"; do
         creds="${pi_credentials[$ip]}"
@@ -77,9 +75,8 @@ if [ "$PULL_GITHUB" = "TRUE" ]; then
             if [ "$CURRENT_BRANCH" != "$BRANCH_NAME" ]; then
                 git checkout $BRANCH_NAME
             fi
-            if [ ! git diff --quiet origin/$BRANCH_NAME ]; then
-                git reset --hard origin/$BRANCH_NAME
-            fi
+            git reset --hard origin/$BRANCH_NAME
+            git pull origin $BRANCH_NAME
         '"
         echo "Git pull completed on $ip"
     done
