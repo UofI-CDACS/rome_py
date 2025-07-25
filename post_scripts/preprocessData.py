@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Load your preprocessed files
-df_transactions = pd.read_csv("./logs/log-sender_station.csv")
-df_graveyard = pd.read_csv("./graveyard/graveyard-sender_station.csv")
+df_transactions = pd.read_csv("/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-test.csv")
+df_graveyard = pd.read_csv("/home/rospi/Desktop/test_ws/graveyard/graveyard-test.csv")
 
 # Convert nanoseconds if needed
 if df_transactions['TIMESTAMP'].dtype == 'int64':
