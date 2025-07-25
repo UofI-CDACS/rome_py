@@ -4,33 +4,64 @@ import csv
 import paramiko
 
 LOG_DIR = './logs'
-REMOTE_LOG_DIR = '~/Desktop/test_ws/src/post/post_logs'
+REMOTE_LOG_DIR = '/home/rospi/test_ws'
 # Log type should be named log-{ID}-{PI}.txt
 LOG_PATTERN = re.compile(r'log-(?P<ID>[^-]+)-(?P<PI>[^.]+)\.txt')
 DATA_PATTERN = re.compile(r'(\w+)=([^;]+)')
 metrics = ['TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET']
 ip_list = [
     '172.23.254.18',
+    '172.23.254.20',
     '172.23.254.22',
     '172.23.254.23',
     '172.23.254.24'
 ]
-
 def fetch_logs_from_hosts(ip_list, username, password, remote_log_dir, local_save_dir):
+    def download_directory(sftp, remote_dir, local_dir):
+        """Recursively download a directory and its contents"""
+        os.makedirs(local_dir, exist_ok=True)
+        
+        try:
+            items = sftp.listdir_attr(remote_dir)
+            for item in items:
+                remote_path = f"{remote_dir}/{item.filename}"
+                local_path = os.path.join(local_dir, item.filename)
+                
+                if item.st_mode & 0o040000:  # Check if it's a directory
+                    print(f"Creating directory: {local_path}")
+                    download_directory(sftp, remote_path, local_path)
+                else:
+                    print(f"Downloading file: {item.filename}")
+                    sftp.get(remote_path, local_path)
+        except Exception as e:
+            print(f"Error processing {remote_dir}: {e}")
+    
     for ip in ip_list:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh.connect(ip, username=username, password=password)
+            print(f"Connecting to {ip}...")
+            ssh.connect(ip, username=username, password=password, timeout=10)
             sftp = ssh.open_sftp()
+            
+            # Create host-specific directory
+            host_local_dir = os.path.join(local_save_dir, ip.replace('.', '_'))
+            
             try:
-                files = sftp.listdir(remote_log_dir)
-                for file in files:
-                    remote_file = os.path.join(remote_log_dir, file)
-                    local_file = os.path.join(local_save_dir, file)
-                    sftp.get(remote_file, local_file)
-            finally:
-                sftp.close()
+                print(f"Downloading directory tree from {remote_log_dir} on {ip}...")
+                download_directory(sftp, remote_log_dir, host_local_dir)
+                print(f"Successfully downloaded all files and directories from {ip}")
+            except FileNotFoundError:
+                print(f"Remote directory {remote_log_dir} not found on {ip}")
+            except PermissionError:
+                print(f"Permission denied accessing {remote_log_dir} on {ip}")
+            
+            sftp.close()
+            print(f"Successfully processed {ip}")
+        except paramiko.AuthenticationException:
+            print(f"Authentication failed for {ip}")
+        except paramiko.SSHException as e:
+            print(f"SSH connection failed for {ip}: {e}")
         except Exception as e:
             print(f"Failed to fetch logs from {ip}: {e}")
         finally:
@@ -117,7 +148,7 @@ def parse_graveyard_logs(graveyard_dir):
                     writer.writerows(log_data)
 
 def main():
-    fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
+    #fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
     parse_graveyard_logs('./graveyard')
 
