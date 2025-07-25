@@ -12,7 +12,11 @@
                   REQUIRES UPDATE
                   IP address of the network interface we want to use.
                 -->
-                <NetworkInterface address="172.23.254.0/28" multicast="true" />
+                <NetworkInterface address="172.23.254.18" multicast="true" />
+                <NetworkInterface address="172.23.254.20" multicast="true" />
+                <NetworkInterface address="172.23.254.22" multicast="true" />
+                <NetworkInterface address="172.23.254.23" multicast="true" />
+                <NetworkInterface address="172.23.254.24" multicast="true" />
             </Interfaces>
         </General>
     </Domain>
