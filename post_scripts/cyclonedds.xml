@@ -8,7 +8,11 @@
                     multicast can be any of true/false/default.
                 -->
                 <NetworkInterface address="127.0.0.1" multicast="true" />
+                <NetworkInterface address="172.23.254.18" multicast="true" />
                 <NetworkInterface address="172.23.254.20" multicast="true" />
+                <NetworkInterface address="172.23.254.22" multicast="true" />
+                <NetworkInterface address="172.23.254.23" multicast="true" />
+                <NetworkInterface address="172.23.254.24" multicast="true" />
             </Interfaces>
         </General>
     </Domain>
