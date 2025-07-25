@@ -56,7 +56,7 @@ for identifier in identifiers:
         for _, row in df_lost_over_time.iterrows():
             if not row['IN_GRAVEYARD']:
                 lost_count += 1
-                lost_counts.append(lost_count)
+            lost_counts.append(lost_count)
 
         df_lost_over_time['LOST_COUNT'] = lost_counts
 
