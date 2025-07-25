@@ -17,12 +17,12 @@ NEXT_LOCATION="${NEXT_LOCATION:-['rospi_1','rospi_2','rospi_3','rospi_4']}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
-    --field="Mode":CB "round_robin!broadcast!unicast" "$MODE" \
-    --field="Count":NUM "$COUNT" \
-    --field="Interval (sec)":NUM "$INTERVAL_SEC" \
-    --field="TTL Value":NUM "$TTL_VALUE" \
+    --field="Mode":CB "round_robin!random!once" "$MODE" \
+    --field="Count":NUM \
+    --field="Interval (sec)":NUM  \
+    --field="TTL Value":NUM \
     --field="DDS Config":CB "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
-    --field="Parcel Count":NUM "$PARCEL_COUNT" \
+    --field="Parcel Count":NUM \
     --field="Owner":TXT "$OWNER" \
     --field="Instruction Set":TXT "$INSTRUCTION_SET" \
     --field="Next Location":TXT "$NEXT_LOCATION" \
