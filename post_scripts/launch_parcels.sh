@@ -93,7 +93,7 @@ PARAMS_JSON="['ttl:"$TTL_VALUE"']"
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard; exec bash"
-
+sleep 3
 ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \

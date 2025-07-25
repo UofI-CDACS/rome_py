@@ -4,7 +4,8 @@ import csv
 import paramiko
 
 LOG_DIR = './logs'
-REMOTE_LOG_DIR = '/home/rospi/test_ws'
+REMOTE_LOG_DIR = '~/Desktop/test_ws/loop'
+
 # Log type should be named log-{ID}-{PI}.txt
 LOG_PATTERN = re.compile(r'log-(?P<ID>[^-]+)-(?P<PI>[^.]+)\.txt')
 DATA_PATTERN = re.compile(r'(\w+)=([^;]+)')
@@ -148,9 +149,9 @@ def parse_graveyard_logs(graveyard_dir):
                     writer.writerows(log_data)
 
 def main():
-    #fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
+    fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
-    parse_graveyard_logs('./graveyard')
+    parse_graveyard_logs('~/Desktop/test_ws/graveyard')
 
 if __name__ == "__main__":
     main()
