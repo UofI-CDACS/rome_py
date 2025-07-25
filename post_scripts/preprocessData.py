@@ -64,5 +64,5 @@ df_combined = df_parcel_status.merge(df_lost_over_time[['MSGID', 'LOST_COUNT']],
 df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
 
 # Save single CSV file
-df_combined.to_csv("parcel_analysis.csv", index=False)
+df_combined.to_csv("/var/lib/Logsforgrafana/parcel_analysis.csv", index=False)
 

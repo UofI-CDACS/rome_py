@@ -2,8 +2,9 @@ import os
 import re
 import csv
 import paramiko
+import subprocess
 
-LOG_DIR = './logs'
+LOG_DIR = '/home/rospi/Desktop/test_ws/src/post/post_scripts/logs'
 REMOTE_LOG_DIR = '/home/rospi/Desktop/test_ws/loop'
 
 # Log type should be named log-{ID}-{PI}.txt
@@ -152,7 +153,8 @@ def main():
     fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
     parse_graveyard_logs('/home/rospi/Desktop/test_ws/graveyard')
-
+    subprocess.run(['python', 'preprocessData.py'])
+    
 if __name__ == "__main__":
     main()
     print("Log parsing completed.")
