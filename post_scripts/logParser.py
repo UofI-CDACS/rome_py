@@ -153,8 +153,8 @@ def main():
     fetch_logs_from_hosts(ip_list, 'rospi', 'rospi', REMOTE_LOG_DIR, LOG_DIR)
     parse_log_file(LOG_DIR)
     parse_graveyard_logs('/home/rospi/Desktop/test_ws/graveyard')
-    subprocess.run(['python', 'preprocessData.py'])
-    
+    subprocess.run(['python3', 'preprocessData.py'])
+
 if __name__ == "__main__":
     main()
     print("Log parsing completed.")
