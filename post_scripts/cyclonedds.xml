@@ -1,10 +1,10 @@
 <CycloneDDS>
-   <Domain>
-     <General>
-        <Interfaces>
-          <NetworkInterface name="eth0" />
-      
-        </Interfaces>
+  <Domain>
+    <General>
+      <Interfaces>
+       <NetworkInterface name="eth0" multicast="true" />
+      </Interfaces>
+      <EnableMulticastLoopback>true</EnableMulticastLoopback>
     </General>
-   </Domain>
+  </Domain>
 </CycloneDDS>
