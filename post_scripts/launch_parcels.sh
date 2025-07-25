@@ -89,7 +89,7 @@ fi
 if [ -n "$PARAMS" ]; then
     PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + [{"key": "ttl", "val": "'$TTL_VALUE'"}]')
 else
-    PARAMS_JSON="[{'key': 'ttl', 'val': '"$TTL_VALUE"'}]"
+PARAMS_JSON="['ttl:"$TTL_VALUE"']"
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
