@@ -13,6 +13,7 @@ INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
 LOSS_MODE="${LOSS_MODE:-lossless}"  # 'lossy' or 'lossless'
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
+QOS_DEPTH="${QOS_DEPTH:-10}"
 NEXT_LOCATION="${NEXT_LOCATION:-[rospi_1]}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
@@ -28,6 +29,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Loop Infinitely":CHK "$LOOP_INFINITELY" \
     --field="Custom Parameters":CHK "$CUSTOM_PARAMS" \
     --field="Loss Mode":CB "lossless!lossy" \
+    --field="QOS Depth":NUM "$QOS_DEPTH" \
     --button="Launch:0" --button="Cancel:1" \
     --separator=",")
 
@@ -41,8 +43,7 @@ if [ -z "$FORM_OUTPUT" ]; then
     exit 1
 fi
 
-
-IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS LOSS_MODE <<< "$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS LOSS_MODE QOS_DEPTH <<< "$FORM_OUTPUT"
 
 # Convert INTERVAL_MS to INTERVAL_SEC
 INTERVAL_SEC=$(echo "scale=3; $INTERVAL_MS / 1000" | bc)
@@ -62,6 +63,7 @@ echo "NEXT_LOCATION: $NEXT_LOCATION"
 echo "LOOP_INFINITELY: $LOOP_INFINITELY"
 echo "CUSTOM_PARAMS: $CUSTOM_PARAMS"
 echo "LOSS_MODE: $LOSS_MODE"
+echo "QOS_DEPTH: $QOS_DEPTH"
 if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
     echo "Parsing logs enabled."
     PARAMS=$(yad --entry --title="Custom Parameters" --text="Enter custom parameters (comma-separated):" --entry-text "" --button="OK:0" --button="Cancel:1" --separator=",")
@@ -93,9 +95,9 @@ else
 PARAMS_JSON="['ttl:"$TTL_VALUE"']"
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
-gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard; exec bash"
+gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
 sleep 3
-ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
+ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \
     -p mode:="$MODE" \
