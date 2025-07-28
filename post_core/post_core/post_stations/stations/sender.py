@@ -95,7 +95,7 @@ class SenderStation(Station):
         
         parcel.prev_location = self.this_station
         parcel.next_location = full_destination
-        
+        parcel.loss_mode = self.loss_mode
         raw_data = self.get_parameter('data').get_parameter_value().string_array_value
         for entry in raw_data:
             try:
