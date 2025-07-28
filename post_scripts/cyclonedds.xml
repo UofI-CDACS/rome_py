@@ -3,14 +3,5 @@
   <General>
     <AllowMulticast>true</AllowMulticast>
   </General>
-      <Discovery>
-        <Peers>
-          <Peer address="172.23.254.20"/>
-          <Peer address="172.23.254.18"/>
-          <Peer address="172.23.254.22"/>
-          <Peer address="172.23.254.23"/>
-          <Peer address="172.23.254.24"/>
-      </Peers>
-    </Discovery>
   </Domain>
 </CycloneDDS>
