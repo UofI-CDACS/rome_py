@@ -32,7 +32,7 @@ class Station(Node):
             qos_profile = QoSProfile(
                 reliability=ReliabilityPolicy.RELIABLE,
                 durability=DurabilityPolicy.TRANSIENT_LOCAL,
-                depth=10
+                depth=100
             )
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, qos_profile)
