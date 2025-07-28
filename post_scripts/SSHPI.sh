@@ -15,7 +15,7 @@ declare -A pi_node_names=(
 )
 WORKSPACE_FOLDER="${WORKSPACE_FOLDER:-$HOME/Desktop/test_ws}"
 BRANCH_NAME="${BRANCH_NAME:-post-develop-feature-preprocessing}"
-DDS_CONFIG="${DDS_CONFIG:-cyclonedx.xml}"
+DDS_CONFIG="${DDS_CONFIG:-cyclone_source.sh}"
 PULL_GITHUB="${PULL_GITHUB:-TRUE}"
 BUILD_WORKSPACE="${BUILD_WORKSPACE:-TRUE}"
 SSH_PIS="${SSH_PIS:-TRUE}"
@@ -24,8 +24,8 @@ QOS_DEPTH="${QOS_DEPTH:-10}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Branch Name":TXT "$BRANCH_NAME" \
-    --field="DDS Config:CB" "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
-    --field="QOS Profile":CB "lossless!lossy" "$QOS_PROFILE" \
+    --field="DDS Config:CB" "cyclone_source.sh!fast_source.sh" \
+    --field="QOS Profile":CB "lossless!lossy" \
     --field="QOS Depth":NUM "$QOS_DEPTH" \
     --field="Pull from GitHub":CHK "$PULL_GITHUB" \
     --field="Build workspace":CHK "$BUILD_WORKSPACE" \
