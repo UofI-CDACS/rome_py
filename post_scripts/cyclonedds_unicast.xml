@@ -1,6 +1,6 @@
 <CycloneDDS>
   <General>
-    <AllowMulticast>true</AllowMulticast>
+    <AllowMulticast>false</AllowMulticast>
   </General>
   <Domain>
     <Discovery>
