@@ -11,17 +11,17 @@ class Station(Node):
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
         self._pub_lock = threading.Lock()  # Fixed: changed from _lock to _pub_lock
-        reliable_qos = QoSProfile(
-        reliability=ReliabilityPolicy.RELIABLE,
-        durability=DurabilityPolicy.TRANSIENT_LOCAL,
-        depth=1000,
-        history=HistoryPolicy.KEEP_ALL
-        )
+        #reliable_qos = QoSProfile(
+        #reliability=ReliabilityPolicy.RELIABLE,
+        #durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        #depth=1000,
+        #history=HistoryPolicy.KEEP_ALL
+        #)
         self.subscription = self.create_subscription(
             Parcel,
             f'{self.this_station}/parcels',
             self._on_parcel_received,
-            reliable_qos
+            10
         )
         self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
 
