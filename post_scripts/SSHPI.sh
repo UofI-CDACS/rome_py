@@ -25,11 +25,11 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Statio
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Branch Name":TXT "$BRANCH_NAME" \
     --field="DDS Config:CB" "cyclone_source.sh!fast_source.sh" "$DDS_CONFIG" \
+    --field="QOS Profile":CB "lossless!lossy" "$QOS_PROFILE" \
+    --field="QOS Depth":NUM "$QOS_DEPTH" \
     --field="Pull from GitHub":CHK "$PULL_GITHUB" \
     --field="Build workspace":CHK "$BUILD_WORKSPACE" \
     --field="SSH into PIs":CHK "$SSH_PIS" \
-    --field="QOS Profile":CB "lossless!lossy" "$QOS_PROFILE" \
-    --field="QOS Depth":NUM "$QOS_DEPTH" \
     --button="Install:0" --button="Cancel:1" \
     --separator=","
 )
