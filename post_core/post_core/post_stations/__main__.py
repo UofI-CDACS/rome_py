@@ -14,21 +14,21 @@ def main():
     parser.add_argument('--timeout', required=False, default=0.1, help='Specifies timeout for parcel processing (default: 0.1 seconds)')
     parser.add_argument('--lossmode', required=False, default='lossy', help='Specifies loss mode for parcel transmission (default: lossy)')
     parser.add_argument('--depth', required=False, default=10, type=int, help='QoS depth for parcel topics (default: 10)')
-    args = parser.parse_args(argv[1:])  # skip script name
+    args = parser.parse_args(argv[1:])
 
     print(f"Starting station type: {args.type} with node name: {args.name} and timeout: {args.timeout}")
 
     station_cls = get_station_class(args.type)
 
     rclpy.init()
-    node = station_cls(name=args.name)
-    node.loss_mode = args.lossmode
-    node.depth = args.depth
+    # Pass loss_mode and depth to constructor
+    node = station_cls(name=args.name, loss_mode=args.lossmode, depth=args.depth)
+    
     async def runner():
         try:
             while rclpy.ok():
                 rclpy.spin_once(node, timeout_sec=float(args.timeout))
-                await asyncio.sleep(0.0)  # let async tasks progress
+                await asyncio.sleep(0.001)  # Small delay for async tasks
         finally:
             node.destroy_node()
             rclpy.shutdown()

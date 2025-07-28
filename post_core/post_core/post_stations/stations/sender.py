@@ -10,8 +10,9 @@ import threading
 
 @register_station("sender")
 class SenderStation(Station):
-    def __init__(self, name):
-        super().__init__(name)
+    def __init__(self, name, loss_mode='lossy', depth=10):
+        # Pass loss_mode and depth to parent constructor
+        super().__init__(name, loss_mode=loss_mode, depth=depth)
 
         # Declare parameters with defaults
         self.declare_parameter('destinations', ['rospi_1', 'rospi_2', 'rospi_3', 'rospi_4'])
@@ -21,14 +22,14 @@ class SenderStation(Station):
         self.declare_parameter('owner_id', 'sender_station')
         self.declare_parameter('instruction_set', 'default')
         self.declare_parameter('data', ['ttl:10'])
-        self.declare_parameter('lossMode', 'lossless')  # 'lossy' or 'lossless'
+        self.declare_parameter('lossMode', loss_mode) 
         
         # Read initial values
         self.destinations = self.get_parameter('destinations').get_parameter_value().string_array_value
         self.count = self.get_parameter('count').get_parameter_value().integer_value
         self.mode = self.get_parameter('mode').get_parameter_value().string_value.lower()
         self.loss_mode = self.get_parameter('lossMode').get_parameter_value().string_value.lower()
-
+        
         # Index to track round robin position
         self._rr_index = 0
         
