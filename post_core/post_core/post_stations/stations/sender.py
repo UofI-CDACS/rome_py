@@ -1,11 +1,12 @@
 import json
 import uuid
-from rclpy.parameter import Parameter, ParameterType
+from rclpy.parameter import Parameter, ParameterType, SetParametersResult  # Added SetParametersResult
 from post_interfaces.msg import KeyValue, Parcel
 from post_core.post_stations.base import Station
 from ..registry import register_station
 from post_core.post_actions import get_action
 import threading
+
 @register_station("sender")
 class SenderStation(Station):
     def __init__(self, name):
@@ -20,6 +21,7 @@ class SenderStation(Station):
         self.declare_parameter('instruction_set', 'default')
         self.declare_parameter('data', ['ttl:10'])
         self.declare_parameter('lossMode', 'lossless')  # 'lossy' or 'lossless'
+        
         # Read initial values
         self.destinations = self.get_parameter('destinations').get_parameter_value().string_array_value
         self.count = self.get_parameter('count').get_parameter_value().integer_value
