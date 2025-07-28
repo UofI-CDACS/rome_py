@@ -5,6 +5,7 @@ from post_interfaces.msg import KeyValue, Parcel
 from post_core.post_stations.base import Station
 from ..registry import register_station
 from post_core.post_actions import get_action
+from rcl_interfaces.msg import SetParametersResult
 import threading
 
 @register_station("sender")
@@ -68,47 +69,52 @@ class SenderStation(Station):
                 self.get_logger().info(f"Sent all {self.count} parcels. Stopping.")
                 self.timer.cancel()
                 return
-        
-        # Choose destination based on mode
-        if self.mode == 'round_robin':
-            destination = self.destinations[self._rr_index % len(self.destinations)]
-            self._rr_index += 1
-        elif self.mode == 'random':
-            import random
-            destination = random.choice(self.destinations)
-        elif self.mode == 'once':
-            if self._sent_count < len(self.destinations):
-                destination = self.destinations[self._sent_count]
+            
+            # Move all destination logic inside the lock
+            if self.mode == 'round_robin':
+                destination = self.destinations[self._rr_index % len(self.destinations)]
+                self._rr_index += 1
+            elif self.mode == 'random':
+                import random
+                destination = random.choice(self.destinations)
+            elif self.mode == 'once':
+                if self._sent_count < len(self.destinations):
+                    destination = self.destinations[self._sent_count]
+                else:
+                    self.get_logger().info("Once mode: all destinations used, stopping.")
+                    self.timer.cancel()
+                    return
             else:
-                self.get_logger().info("Once mode: all destinations used, stopping.")
-                self.timer.cancel()
-                return
-        else:
-            self.get_logger().warn(f"Unknown mode '{self.mode}', defaulting to round_robin.")
-            destination = self.destinations[self._rr_index % len(self.destinations)]
-            self._rr_index += 1
-        
-        parcel = Parcel()
-        parcel.parcel_id = str(uuid.uuid4())
-        parcel.owner_id = self.get_parameter('owner_id').get_parameter_value().string_value
-        parcel.instruction_set = self.get_parameter('instruction_set').get_parameter_value().string_value
-        
-        namespace = self.get_namespace().strip('/')
-        destination = destination.strip('/')
-        full_destination = f"/{namespace}/{destination}" if namespace else f"/{destination}"
-        
-        parcel.prev_location = self.this_station
-        parcel.next_location = full_destination
-        parcel.loss_mode = self.loss_mode
-        raw_data = self.get_parameter('data').get_parameter_value().string_array_value
-        for entry in raw_data:
-            try:
-                key, value = entry.split(':', 1)
-                kv = KeyValue(key=key.strip(), value=value.strip())
-                parcel.data.append(kv)
-            except ValueError:
-                self.get_logger().warn(f"Invalid data entry: '{entry}'")
+                self.get_logger().warn(f"Unknown mode '{self.mode}', defaulting to round_robin.")
+                destination = self.destinations[self._rr_index % len(self.destinations)]
+                self._rr_index += 1
+            
+            # Create parcel inside lock to ensure consistent state
+            parcel = Parcel()
+            parcel.parcel_id = str(uuid.uuid4())
+            parcel.owner_id = self.get_parameter('owner_id').get_parameter_value().string_value
+            parcel.instruction_set = self.get_parameter('instruction_set').get_parameter_value().string_value
+            
+            namespace = self.get_namespace().strip('/')
+            destination = destination.strip('/')
+            full_destination = f"/{namespace}/{destination}" if namespace else f"/{destination}"
+            
+            parcel.prev_location = self.this_station
+            parcel.next_location = full_destination
+            parcel.loss_mode = self.loss_mode
+            
+            raw_data = self.get_parameter('data').get_parameter_value().string_array_value
+            for entry in raw_data:
+                try:
+                    key, value = entry.split(':', 1)
+                    kv = KeyValue(key=key.strip(), value=value.strip())
+                    parcel.data.append(kv)
+                except ValueError:
+                    self.get_logger().warn(f"Invalid data entry: '{entry}'")
+            
+            self._sent_count += 1
+            
+            # Send parcel outside lock to avoid blocking
         
         self.send_parcel(parcel, full_destination, lossmode=self.loss_mode)
-        self._sent_count += 1
         self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")

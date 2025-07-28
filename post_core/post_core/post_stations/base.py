@@ -11,19 +11,28 @@ class Station(Node):
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
         self._pub_lock = threading.Lock()  # Fixed: changed from _lock to _pub_lock
+        reliable_qos = QoSProfile(
+        reliability=ReliabilityPolicy.RELIABLE,
+        durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        depth=1000,
+        history=HistoryPolicy.KEEP_ALL
+        )
         self.subscription = self.create_subscription(
             Parcel,
             f'{self.this_station}/parcels',
             self._on_parcel_received,
-            10
+            reliable_qos
         )
         self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
 
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
-        with self._pub_lock:  # Now this matches the attribute name
-            if topic_name not in self._pub_cache:
-                self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, qos_profile)
-            return self._pub_cache[topic_name]
+        # Include QoS in the cache key
+        qos_key = f"{topic_name}_{qos_profile.reliability}_{qos_profile.durability}_{qos_profile.depth}"
+        
+        with self._pub_lock:
+            if qos_key not in self._pub_cache:
+                self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
+            return self._pub_cache[qos_key]
 
     def send_parcel(self, parcel, next_location: str, lossmode: str = 'lossy'):
         if lossmode == 'lossless':
