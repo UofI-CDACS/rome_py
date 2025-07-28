@@ -12,6 +12,8 @@ def main():
     parser.add_argument('--type', required=True, help='Station type to run')
     parser.add_argument('--name', required=True, help='Station node name')
     parser.add_argument('--timeout', required=False, default=0.1, help='Specifies timeout for parcel processing (default: 0.1 seconds)')
+    parser.add_argument('--lossmode', required=False, default='lossy', help='Specifies loss mode for parcel transmission (default: lossy)')
+    parser.add_argument('--depth', required=False, default=10, type=int, help='QoS depth for parcel topics (default: 10)')
     args = parser.parse_args(argv[1:])  # skip script name
 
     print(f"Starting station type: {args.type} with node name: {args.name} and timeout: {args.timeout}")
@@ -20,6 +22,8 @@ def main():
 
     rclpy.init()
     node = station_cls(name=args.name)
+    node.loss_mode = args.lossmode
+    node.depth = args.depth
     async def runner():
         try:
             while rclpy.ok():
