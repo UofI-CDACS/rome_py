@@ -1,16 +1,16 @@
 import json
 import uuid
-from rclpy.parameter import Parameter, ParameterType
+from rclpy.parameter import Parameter,SetParametersResult, ParameterType
 from post_interfaces.msg import KeyValue, Parcel
 from post_core.post_stations.base import Station
 from ..registry import register_station
 from post_core.post_actions import get_action
-
+import threading
 @register_station("sender")
 class SenderStation(Station):
     def __init__(self, name):
         super().__init__(name)
-        
+
         # Declare parameters with defaults
         self.declare_parameter('destinations', ['rospi_1', 'rospi_2', 'rospi_3', 'rospi_4'])
         self.declare_parameter('count', 20)
@@ -40,30 +40,32 @@ class SenderStation(Station):
         
         # Tracking how many parcels sent
         self._sent_count = 0
-        
+        self._state_lock = threading.Lock()
+
     def _on_params_changed(self, params):
-        for param in params:
-            if param.name == 'destinations':
-                self.destinations = param.value
-                self.get_logger().info(f"Updated destinations: {self.destinations}")
-            elif param.name == 'count':
-                self.count = param.value
-                self.get_logger().info(f"Updated count: {self.count}")
-            elif param.name == 'mode':
-                self.mode = param.value.lower()
-                self.get_logger().info(f"Updated mode: {self.mode}")
-        
-        # Reset counters on param change if needed
-        self._sent_count = 0
-        self._rr_index = 0
-        
+        with self._state_lock:
+            for param in params:
+                if param.name == 'destinations':
+                    self.destinations = param.value
+                    self.get_logger().info(f"Updated destinations: {self.destinations}")
+                elif param.name == 'count':
+                    self.count = param.value
+                    self.get_logger().info(f"Updated count: {self.count}")
+                elif param.name == 'mode':
+                    self.mode = param.value.lower()
+                    self.get_logger().info(f"Updated mode: {self.mode}")
+            
+            # Reset counters on param change if needed
+            self._sent_count = 0
+            self._rr_index = 0
         return SetParametersResult(successful=True)
         
     def publish_parcel(self):
-        if self._sent_count >= self.count:
-            self.get_logger().info(f"Sent all {self.count} parcels. Stopping.")
-            self.timer.cancel()
-            return
+        with self._state_lock:
+            if self._sent_count >= self.count:
+                self.get_logger().info(f"Sent all {self.count} parcels. Stopping.")
+                self.timer.cancel()
+                return
         
         # Choose destination based on mode
         if self.mode == 'round_robin':
