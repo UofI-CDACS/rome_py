@@ -19,6 +19,8 @@ DDS_CONFIG="${DDS_CONFIG:-cyclonedx.xml}"
 PULL_GITHUB="${PULL_GITHUB:-TRUE}"
 BUILD_WORKSPACE="${BUILD_WORKSPACE:-TRUE}"
 SSH_PIS="${SSH_PIS:-TRUE}"
+QOS_PROFILE="${QOS_PROFILE:-lossless}"
+QOS_DEPTH="${QOS_DEPTH:-10}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Stations Parameters" \
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Branch Name":TXT "$BRANCH_NAME" \
@@ -26,6 +28,8 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Statio
     --field="Pull from GitHub":CHK "$PULL_GITHUB" \
     --field="Build workspace":CHK "$BUILD_WORKSPACE" \
     --field="SSH into PIs":CHK "$SSH_PIS" \
+    --field="QOS Profile":CB "lossless!lossy" "$QOS_PROFILE" \
+    --field="QOS Depth":NUM "$QOS_DEPTH" \
     --button="Install:0" --button="Cancel:1" \
     --separator=","
 )
@@ -40,7 +44,7 @@ if [ -z "$FORM_OUTPUT" ]; then
     exit 1
 fi
 
-IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME DDS_CONFIG PULL_GITHUB BUILD_WORKSPACE SSH_PIS <<< "$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME DDS_CONFIG PULL_GITHUB BUILD_WORKSPACE SSH_PIS QOS_PROFILE QOS_DEPTH <<< "$FORM_OUTPUT"
 
 # Option 1: Pull from GitHub
 if [ "$PULL_GITHUB" = "TRUE" ]; then
@@ -122,7 +126,7 @@ if [ "$SSH_PIS" = "TRUE" ]; then
             chmod -R +rwx .
             source \"./src/post/post_scripts/$DDS_CONFIG\"
             source \"$WORKSPACE_FOLDER/install/setup.bash\"
-            ros2 run post_core station --name ${NODE_NAME} --type default
+            ros2 run post_core station --name ${NODE_NAME} --type default --lossmode $QOS_PROFILE --depth $QOS_DEPTH
         "
         gnome-terminal --tab -- bash -c "echo 'Connecting to $USER_AT_HOST...'; ssh -tt -o StrictHostKeyChecking=no $USER_AT_HOST '$REMOTE_COMMAND; bash'; exec bash"
     done
