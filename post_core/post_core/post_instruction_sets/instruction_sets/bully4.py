@@ -6,20 +6,20 @@ from ..registry import register_instruction_set
 @register_instruction_set("loop")
 class LoopInstructionSet(InstructionSet):
     graveyard = "default_graveyard"
-
     async def run(self, station, parcel) -> InstructionResult:
         # Bind actions to this station and parcel
         dec_ttl = get_action('decrement_data_key')(station, parcel)
         log_parcel = get_action('file_log_parcel')(station, parcel)
         check = get_action('check_ttl')(station, parcel)
         fwd = get_action('forward')(station, parcel)
-
+        check_ttl = get_action('check_ttl')(station, parcel)
         # Map current station to the next destination
+        foursNext = f"rospi_{check_ttl(key='ttl') % 4 + 1}"
         next_map = {
-            "rospi_1": "rospi_2",
-            "rospi_2": "rospi_3",
+            "rospi_1": "rospi_4",
+            "rospi_2": "rospi_4",
             "rospi_3": "rospi_4",
-            "rospi_4": "rospi_1",
+            "rospi_4": foursNext,
         }
 
         name = station.get_name().split("/")[-1]

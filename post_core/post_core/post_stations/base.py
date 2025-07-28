@@ -2,7 +2,7 @@ import asyncio
 import rclpy
 from rclpy.node import Node
 from post_interfaces.msg import Parcel
-
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 class Station(Node):
     def __init__(self, name=None):
         super().__init__(f'{name}' or 'station_base')
@@ -16,14 +16,26 @@ class Station(Node):
         )
         self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
 
-    def get_publisher(self, topic_name: str):
+    def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
         if topic_name not in self._pub_cache:
-            self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, 10)
+            self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, qos_profile)
         return self._pub_cache[topic_name]
 
-    def send_parcel(self, parcel, next_location: str):
+    def send_parcel(self, parcel, next_location: str, lossmode: str = 'lossy'):
+        if lossmode == 'lossy':
+            qos_profile = QoSProfile(
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+                depth=10
+            )
+        else:
+            qos_profile = QoSProfile(
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                depth=10
+            )
         topic = f'{next_location}/parcels'
-        publisher = self.get_publisher(topic)
+        publisher = self.get_publisher(topic, qos_profile)
         publisher.publish(parcel)
 
     def _on_parcel_received(self, parcel):

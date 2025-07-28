@@ -19,12 +19,13 @@ class SenderStation(Station):
         self.declare_parameter('owner_id', 'sender_station')
         self.declare_parameter('instruction_set', 'default')
         self.declare_parameter('data', ['ttl:10'])
-        
+        self.declare_parameter('lossMode', 'lossless')  # 'lossy' or 'lossless'
         # Read initial values
         self.destinations = self.get_parameter('destinations').get_parameter_value().string_array_value
         self.count = self.get_parameter('count').get_parameter_value().integer_value
         self.mode = self.get_parameter('mode').get_parameter_value().string_value.lower()
-        
+        self.loss_mode = self.get_parameter('lossMode').get_parameter_value().string_value.lower()
+
         # Index to track round robin position
         self._rr_index = 0
         
@@ -104,6 +105,6 @@ class SenderStation(Station):
             except ValueError:
                 self.get_logger().warn(f"Invalid data entry: '{entry}'")
         
-        self.send_parcel(parcel, full_destination)
+        self.send_parcel(parcel, full_destination, lossmode=self.loss_mode)
         self._sent_count += 1
         self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")

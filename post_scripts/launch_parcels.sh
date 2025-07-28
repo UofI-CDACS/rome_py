@@ -11,6 +11,7 @@ PARCEL_COUNT="${PARCEL_COUNT:-100}"
 OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
+LOSS_MODE="${LOSS_MODE:-lossless}"  # 'lossy' or 'lossless'
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
 NEXT_LOCATION="${NEXT_LOCATION:-[rospi_1]}"
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcels Parameters" \
@@ -26,6 +27,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Next Location":TXT "$NEXT_LOCATION" \
     --field="Loop Infinitely":CHK "$LOOP_INFINITELY" \
     --field="Custom Parameters":CHK "$CUSTOM_PARAMS" \
+    --field="Loss Mode":CB "lossless!lossy" \
     --button="Launch:0" --button="Cancel:1" \
     --separator=",")
 
@@ -40,7 +42,7 @@ if [ -z "$FORM_OUTPUT" ]; then
 fi
 
 
-IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS <<< "$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS LOSS_MODE <<< "$FORM_OUTPUT"
 
 # Convert INTERVAL_MS to INTERVAL_SEC
 INTERVAL_SEC=$(echo "scale=3; $INTERVAL_MS / 1000" | bc)
@@ -59,6 +61,7 @@ echo "INSTRUCTION_SET: $INSTRUCTION_SET"
 echo "NEXT_LOCATION: $NEXT_LOCATION"
 echo "LOOP_INFINITELY: $LOOP_INFINITELY"
 echo "CUSTOM_PARAMS: $CUSTOM_PARAMS"
+echo "LOSS_MODE: $LOSS_MODE"
 if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
     echo "Parsing logs enabled."
     PARAMS=$(yad --entry --title="Custom Parameters" --text="Enter custom parameters (comma-separated):" --entry-text "" --button="OK:0" --button="Cancel:1" --separator=",")
@@ -96,6 +99,7 @@ ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \
     -p mode:="$MODE" \
+    -p loss_mode:="$LOSS_MODE" \
     -p interval_sec:=$INTERVAL_SEC \
     -p owner_id:="$OWNER" \
     -p instruction_set:="$INSTRUCTION_SET" \
@@ -111,6 +115,7 @@ if [ "$LOOP_INFINITELY" = "TRUE" ]; then
         -p destinations:="$NEXT_LOCATION" \
         -p count:=$PARCEL_COUNT \
         -p mode:="$MODE" \
+        -p loss_mode:="$LOSS_MODE" \
         -p interval_sec:=$INTERVAL_SEC \
         -p owner_id:="$OWNER" \
         -p instruction_set:="$INSTRUCTION_SET" \

@@ -6,7 +6,6 @@ from ..registry import register_instruction_set
 @register_instruction_set("loop")
 class LoopInstructionSet(InstructionSet):
     graveyard = "default_graveyard"
-
     async def run(self, station, parcel) -> InstructionResult:
         # Bind actions to this station and parcel
         dec_ttl = get_action('decrement_data_key')(station, parcel)
