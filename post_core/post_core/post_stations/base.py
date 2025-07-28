@@ -10,7 +10,7 @@ class Station(Node):
         super().__init__(f'{name}' or 'station_base')
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
-        self._lock = threading.Lock()
+        self._pub_lock = threading.Lock()  # Fixed: changed from _lock to _pub_lock
         self.subscription = self.create_subscription(
             Parcel,
             f'{self.this_station}/parcels',
@@ -20,7 +20,7 @@ class Station(Node):
         self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
 
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
-        with self._pub_lock:
+        with self._pub_lock:  # Now this matches the attribute name
             if topic_name not in self._pub_cache:
                 self._pub_cache[topic_name] = self.create_publisher(Parcel, topic_name, qos_profile)
             return self._pub_cache[topic_name]
@@ -56,3 +56,12 @@ class Station(Node):
     async def parcel_callback(self, parcel: Parcel):
         # To be overridden by subclasses
         self.get_logger().warn(f"Received parcel {parcel.parcel_id} but no handler implemented.")
+    
+    def __del__(self):
+        # Clean up publishers to prevent memory leaks
+        try:
+            for pub in self._pub_cache.values():
+                pub.destroy()
+            self._pub_cache.clear()
+        except:
+            pass  # Ignore cleanup errors during shutdown
