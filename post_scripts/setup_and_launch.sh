@@ -22,7 +22,7 @@ ssh_run() {
   local user="$2"
   local script="$3"
 
-  ssh -A -tt -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
+  ssh -A -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
 $script
 EOF
 }
