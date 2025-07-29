@@ -127,7 +127,7 @@ launch_station_tmux_local() {
   # Send SSH and launch command to tmux window
   # Build the remote launch command
   remote_cmd="cd \"$ws_path\""
-  remote_cmd+=" && source \"./src/post/post_scripts/${dds_config}\""
+  remote_cmd+=" && source \"$ws_path/src/post/post_scripts/$dds_config\""
   remote_cmd+=" && source \"$ws_path/install/setup.bash\""
   remote_cmd+=" && ros2 run post_core station"
   remote_cmd+=" --name ${node_name}"
