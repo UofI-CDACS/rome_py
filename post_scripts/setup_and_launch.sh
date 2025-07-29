@@ -119,7 +119,7 @@ launch_station() {
   echo "→ [REMOTE $ip] Launching station node (${node_name})..."
   gnome-terminal --tab -- bash -c "
     echo 'Connecting to ${user}@${ip}...';
-    ssh -tt -o StrictHostKeyChecking=no ${user}@${ip} bash -s <<EOF
+    ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -s <<EOF
 cd \"$ws_path\"
 chmod -R +rwx .
 source \"./src/post/post_scripts/${dds_config}\"
