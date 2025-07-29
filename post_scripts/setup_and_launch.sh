@@ -125,7 +125,19 @@ launch_station_tmux_local() {
   fi
 
   # Send SSH and launch command to tmux window
-  tmux send-keys -t "${session_name}:${window_name}" "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c 'cd \"$ws_path\" && chmod -R +rwx . && source \"./src/post/post_scripts/${dds_config}\" && source \"$ws_path/install/setup.bash\" && ros2 run post_core station --name ${node_name} --type default --lossmode ${qos_profile} --depth ${qos_depth}'" C-m
+  # Build the remote launch command
+  remote_cmd="cd \"$ws_path\""
+  remote_cmd+=" && source \"./src/post/post_scripts/${dds_config}\""
+  remote_cmd+=" && source \"$ws_path/install/setup.bash\""
+  remote_cmd+=" && ros2 run post_core station"
+  remote_cmd+=" --name ${node_name}"
+  remote_cmd+=" --type default"
+  remote_cmd+=" --lossmode ${qos_profile}"
+  remote_cmd+=" --depth ${qos_depth}"
+
+  # Send the SSH + launch command into the tmux window
+  tmux send-keys -t "${session_name}:${window_name}" \
+    "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c '$remote_cmd'" C-m
 }
 
 # === YAD Form ===
