@@ -1,16 +1,7 @@
-<CycloneDDS>
+<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+    <Domain Id="any">
   <General>
-    <AllowMulticast>false</AllowMulticast>
+    <AllowMulticast>true</AllowMulticast>
   </General>
-  <Domain>
-    <Discovery>
-      <Peers>
-        <Peer address="172.23.254.20"/>
-        <Peer address="172.23.254.18"/>
-        <Peer address="172.23.254.22"/>
-        <Peer address="172.23.254.23"/>
-        <Peer address="172.23.254.24"/>
-      </Peers>
-    </Discovery>
   </Domain>
 </CycloneDDS>
