@@ -8,5 +8,5 @@ import asyncio
 class GraveyardInstructionSet(InstructionSet):
     async def run(self, station, parcel) -> InstructionResult:
         log_parcel = get_action('file_log_parcel')(station, parcel)
-        await log_parcel(log_path=f"~/test_ws/graveyard/{station.this_station}")
+        await log_parcel(log_path=f"~/Desktop/test_ws/graveyard/{station.this_station}")
         return InstructionResult(signal=InstructionSignal.CONTINUE)

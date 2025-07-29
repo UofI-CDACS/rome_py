@@ -44,12 +44,31 @@
                                 `${maxInitialPeersRange} - 1`.
                             -->
                             <address>127.0.0.1</address>
-			
-			    <address>172.23.254.20</address>
+                        </udpv4>
+                    </locator>
+                    <locator>
+                        <udpv4>
+                            <address>172.23.254.20</address>
+                        </udpv4>
+                    </locator>
+                    <locator>
+                        <udpv4>
                             <address>172.23.254.18</address>
-                	    <address>172.23.254.22</address>
-		            <address>172.23.254.23</address>
-		            <address>172.23.254.24</address>
+                        </udpv4>
+                    </locator>
+                    <locator>
+                        <udpv4>
+                            <address>172.23.254.22</address>
+                        </udpv4>
+                    </locator>
+                    <locator>
+                        <udpv4>
+                            <address>172.23.254.23</address>
+                        </udpv4>
+                    </locator>
+                    <locator>
+                        <udpv4>
+                            <address>172.23.254.24</address>
                         </udpv4>
                     </locator>
                 </initialPeersList>
