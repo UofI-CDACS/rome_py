@@ -95,7 +95,7 @@ ssh_run() {
   local user="$2"
   local script="$3"
 
-  ssh -A -tt -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
+  ssh -A -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
 $script
 EOF
 }
@@ -125,7 +125,7 @@ launch_station_tmux_local() {
   fi
 
   # Send SSH and launch command to tmux window
-  tmux send-keys -t "${session_name}:${window_name}" "ssh -tt -o StrictHostKeyChecking=no ${user}@${ip} bash -c 'cd \"$ws_path\" && chmod -R +rwx . && source \"./src/post/post_scripts/${dds_config}\" && source \"$ws_path/install/setup.bash\" && ros2 run post_core station --name ${node_name} --type default --lossmode ${qos_profile} --depth ${qos_depth}'" C-m
+  tmux send-keys -t "${session_name}:${window_name}" "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c 'cd \"$ws_path\" && chmod -R +rwx . && source \"./src/post/post_scripts/${dds_config}\" && source \"$ws_path/install/setup.bash\" && ros2 run post_core station --name ${node_name} --type default --lossmode ${qos_profile} --depth ${qos_depth}'" C-m
 }
 
 # === YAD Form ===
