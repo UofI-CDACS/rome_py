@@ -11,6 +11,7 @@ def log_parcel(station: Node, parcel):
     prev_location = getattr(parcel, 'prev_location', '<unknown>')
     next_location = getattr(parcel, 'next_location', '<unknown>')
 
+    
     msg = (
         f"[log_parcel] Parcel ID: {parcel_id}, "
         f"Owner: {owner_id}, "
