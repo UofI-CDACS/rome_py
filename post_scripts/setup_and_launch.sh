@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# --- MACHINE INFO: IP to user and node name mappings ---
 declare -A PI_USERS=(
   [172.23.254.18]="rospi"
   [172.23.254.22]="rospi"
@@ -16,53 +15,51 @@ declare -A PI_NAMES=(
   [172.23.254.24]="rospi_4"
 )
 
-# --- FUNCTION: Sync local or remote post repo to match remote branch ---
 sync_git_repo() {
   local path="$1"
   local branch="$2"
 
   cd "$path"
-
-  # Clone if missing
   if [ ! -d post ]; then
     git clone https://github.com/UofI-CDACS/rome_py.git post
   fi
 
   cd post
-
-  # Ensure we're on correct branch and synced
   git fetch --all
   local current_branch
   current_branch=$(git rev-parse --abbrev-ref HEAD)
-
   if [ "$current_branch" != "$branch" ]; then
     git checkout "$branch"
   fi
-
   git reset --hard "origin/$branch"
   git pull origin "$branch"
 }
 
-# --- FUNCTION: Clean and build ROS workspace ---
 build_ros_workspace() {
   local path="$1"
 
   cd "$path"
   rm -rf build install log
+
+  # Temporarily disable 'set -u' to avoid unbound variable error in ROS setup.bash
+  set +u
   source /opt/ros/jazzy/setup.bash
+  set -u
+
   colcon build --symlink-install
 }
 
-# --- FUNCTION: Run given script string remotely via SSH with safe flags ---
+# Use heredoc to send script safely to ssh without -c quoting issues
 ssh_run() {
   local ip="$1"
   local user="$2"
   local script="$3"
 
-  ssh -A -tt -o StrictHostKeyChecking=no "${user}@${ip}" bash -c "$script"
+  ssh -A -tt -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
+$script
+EOF
 }
 
-# --- FUNCTION: Open terminal tab and launch station node remotely ---
 launch_station() {
   local ip="$1"
   local user="$2"
@@ -74,25 +71,20 @@ launch_station() {
 
   gnome-terminal --tab -- bash -c "
         echo 'Connecting to ${user}@${ip}...';
-        ssh -tt -o StrictHostKeyChecking=no ${user}@${ip} bash -c '
-            cd \"$ws_path\"
-            chmod -R +rwx .
-            source \"./src/post/post_scripts/${dds_config}\"
-            source \"$ws_path/install/setup.bash\"
-            ros2 run post_core station \
-                --name ${node_name} \
-                --type default \
-                --lossmode ${qos_profile} \
-                --depth ${qos_depth}
-            bash
-        ';
+        ssh -tt -o StrictHostKeyChecking=no ${user}@${ip} bash -s <<EOF
+cd \"$ws_path\"
+chmod -R +rwx .
+source \"./src/post/post_scripts/${dds_config}\"
+source \"$ws_path/install/setup.bash\"
+ros2 run post_core station --name ${node_name} --type default --lossmode ${qos_profile} --depth ${qos_depth}
+bash
+EOF
+        ;
         bash
     "
 }
 
-# ========================
-# === YAD FORM INPUT ====
-# ========================
+# === YAD form ===
 
 DEFAULT_WORKSPACE="$HOME/Desktop/test_ws"
 DEFAULT_BRANCH="post-develop-branch"
@@ -117,31 +109,17 @@ FORM_OUTPUT=$(
 
 YAD_EXIT_CODE=$?
 
-# If cancel or close
 if [ $YAD_EXIT_CODE -ne 0 ] || [ -z "$FORM_OUTPUT" ]; then
   echo "User cancelled or form was empty."
   exit 0
 fi
 
-# Parse form output
-IFS=',' read -r \
-  WORKSPACE_FOLDER \
-  BRANCH_NAME \
-  DDS_CONFIG_FILE \
-  QOS_PROFILE \
-  QOS_DEPTH \
-  PULL_GITHUB \
-  BUILD_WORKSPACE \
-  SSH_PIS \
-  <<<"$FORM_OUTPUT"
+IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME DDS_CONFIG_FILE QOS_PROFILE QOS_DEPTH PULL_GITHUB BUILD_WORKSPACE SSH_PIS <<<"$FORM_OUTPUT"
 
 SRC_PATH="${WORKSPACE_FOLDER}/src"
 
-# =====================
-# === MAIN EXECUTION ==
-# =====================
+# --- Main logic ---
 
-# -- Step 1: Git Pull --
 if [ "$PULL_GITHUB" = "TRUE" ]; then
   echo "[LOCAL] Syncing repo..."
   sync_git_repo "$SRC_PATH" "$BRANCH_NAME"
@@ -150,24 +128,23 @@ if [ "$PULL_GITHUB" = "TRUE" ]; then
     user="${PI_USERS[$ip]}"
     echo "[REMOTE $ip] Syncing repo..."
     ssh_run "$ip" "$user" "
-            set -e
-            cd \"$SRC_PATH\"
-            if [ ! -d post ]; then
-                git clone https://github.com/UofI-CDACS/rome_py.git post
-            fi
-            cd post
-            git fetch --all
-            current_branch=\$(git rev-parse --abbrev-ref HEAD)
-            if [ \"\$current_branch\" != \"$BRANCH_NAME\" ]; then
-                git checkout \"$BRANCH_NAME\"
-            fi
-            git reset --hard origin/$BRANCH_NAME
-            git pull origin $BRANCH_NAME
-        "
+set -e
+cd \"$SRC_PATH\"
+if [ ! -d post ]; then
+    git clone https://github.com/UofI-CDACS/rome_py.git post
+fi
+cd post
+git fetch --all
+current_branch=\$(git rev-parse --abbrev-ref HEAD)
+if [ \"\$current_branch\" != \"$BRANCH_NAME\" ]; then
+    git checkout \"$BRANCH_NAME\"
+fi
+git reset --hard origin/$BRANCH_NAME
+git pull origin $BRANCH_NAME
+"
   done
 fi
 
-# -- Step 2: Build --
 if [ "$BUILD_WORKSPACE" = "TRUE" ]; then
   echo "[LOCAL] Building workspace..."
   build_ros_workspace "$WORKSPACE_FOLDER"
@@ -176,16 +153,20 @@ if [ "$BUILD_WORKSPACE" = "TRUE" ]; then
     user="${PI_USERS[$ip]}"
     echo "[REMOTE $ip] Building workspace..."
     ssh_run "$ip" "$user" "
-            set -e
-            cd \"$WORKSPACE_FOLDER\"
-            rm -rf build install log
-            source /opt/ros/jazzy/setup.bash
-            colcon build --symlink-install
-        "
+set -e
+cd \"$WORKSPACE_FOLDER\"
+rm -rf build install log
+
+# Disable 'set -u' before sourcing ROS setup on remote to avoid unbound var error
+set +u
+source /opt/ros/jazzy/setup.bash
+set -u
+
+colcon build --symlink-install
+"
   done
 fi
 
-# -- Step 3: Launch nodes --
 if [ "$SSH_PIS" = "TRUE" ]; then
   for ip in "${!PI_USERS[@]}"; do
     user="${PI_USERS[$ip]}"
