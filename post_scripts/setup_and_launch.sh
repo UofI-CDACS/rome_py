@@ -10,47 +10,15 @@ declare -A PI_USERS=(
 )
 
 declare -A PI_NAMES=(
-  [172.23.254.18]="rospi_1"
+  [172.23.254.24]="rospi_1"
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
-  [172.23.254.24]="rospi_4"
+  [172.23.254.18]="rospi_4"
 )
 
-# === Utility ===
-ssh_run() {
-  local ip="$1"
-  local user="$2"
-  local script="$3"
-
-  ssh -A -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
-$script
-EOF
-}
-
 # === Git Functions ===
-sync_git_repo() {
-  local path="$1"
-  local branch="$2"
-
-  echo "→ [LOCAL] Starting repo sync at $path (branch: $branch)..."
-  cd "$path"
-  if [ ! -d post ]; then
-    git clone https://github.com/UofI-CDACS/rome_py.git post
-  fi
-  cd post
-  git fetch --all
-  local current_branch
-  current_branch=$(git rev-parse --abbrev-ref HEAD)
-  if [ "$current_branch" != "$branch" ]; then
-    git checkout "$branch"
-  fi
-  git reset --hard "origin/$branch"
-  git pull origin "$branch"
-  echo "✓ [LOCAL] Repo sync completed at $path."
-}
-
 sync_git_repo_block() {
-  echo "→ [$1] Starting repo sync..."
+  echo "[$1] Syncing repo..."
   local ip="$2"
   local user="$3"
   local path="$4"
@@ -71,25 +39,30 @@ sync_git_repo_block() {
     git reset --hard origin/$branch
     git pull origin $branch
   "
-  echo "✓ [$1] Repo sync completed."
+}
+
+sync_git_repo() {
+  local path="$1"
+  local branch="$2"
+
+  cd "$path"
+  if [ ! -d post ]; then
+    git clone https://github.com/UofI-CDACS/rome_py.git post
+  fi
+  cd post
+  git fetch --all
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$current_branch" != "$branch" ]; then
+    git checkout "$branch"
+  fi
+  git reset --hard "origin/$branch"
+  git pull origin "$branch"
 }
 
 # === Build Functions ===
-build_ros_workspace() {
-  local path="$1"
-
-  echo "→ [LOCAL] Starting workspace build at $path..."
-  cd "$path"
-  rm -rf build install log
-  set +u
-  source /opt/ros/jazzy/setup.bash
-  set -u
-  colcon build --symlink-install
-  echo "✓ [LOCAL] Workspace build completed at $path."
-}
-
 build_ros_workspace_block() {
-  echo "→ [$1] Starting workspace build..."
+  echo "[$1] Building workspace..."
   local ip="$2"
   local user="$3"
   local path="$4"
@@ -103,11 +76,32 @@ build_ros_workspace_block() {
     set -u
     colcon build --symlink-install
   "
-  echo "✓ [$1] Workspace build completed."
 }
 
-# === Launch ===
-launch_station() {
+build_ros_workspace() {
+  local path="$1"
+
+  cd "$path"
+  rm -rf build install log
+  set +u
+  source /opt/ros/jazzy/setup.bash
+  set -u
+  colcon build --symlink-install
+}
+
+# === Utility ===
+ssh_run() {
+  local ip="$1"
+  local user="$2"
+  local script="$3"
+
+  ssh -A -tt -o StrictHostKeyChecking=no "${user}@${ip}" bash -s <<EOF
+$script
+EOF
+}
+
+# === Launch using local tmux session ===
+launch_station_tmux_local() {
   local ip="$1"
   local user="$2"
   local node_name="$3"
@@ -116,21 +110,22 @@ launch_station() {
   local qos_profile="$6"
   local qos_depth="$7"
 
-  echo "→ [REMOTE $ip] Launching station node (${node_name})..."
-  gnome-terminal --tab -- bash -c "
-    echo 'Connecting to ${user}@${ip}...';
-    ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -s <<EOF
-cd \"$ws_path\"
-chmod -R +rwx .
-source \"./src/post/post_scripts/${dds_config}\"
-source \"$ws_path/install/setup.bash\"
-ros2 run post_core station --name ${node_name} --type default --lossmode ${qos_profile} --depth ${qos_depth}
-bash
-EOF
-    ;
-    bash
-  "
-  echo "✓ [REMOTE $ip] Station launch initiated."
+  local session_name="post_launch"
+  local window_name="${ip//./_}"
+
+  # Create tmux session if it does not exist
+  if ! tmux has-session -t "$session_name" 2>/dev/null; then
+    tmux new-session -d -s "$session_name" -n "$window_name"
+  else
+    # If window exists, kill and recreate for fresh start
+    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
+      tmux kill-window -t "${session_name}:$window_name"
+    fi
+    tmux new-window -t "$session_name" -n "$window_name"
+  fi
+
+  # Send SSH and launch command to tmux window
+  tmux send-keys -t "${session_name}:${window_name}" "ssh -tt -o StrictHostKeyChecking=no ${user}@${ip} bash -c 'cd \"$ws_path\" && chmod -R +rwx . && source \"./src/post/post_scripts/${dds_config}\" && source \"$ws_path/install/setup.bash\" && ros2 run post_core station --name ${node_name} --type default --lossmode ${qos_profile} --depth ${qos_depth}'" C-m
 }
 
 # === YAD Form ===
@@ -182,6 +177,8 @@ fi
 
 if [ "$SSH_PIS" = "TRUE" ]; then
   for ip in "${!PI_USERS[@]}"; do
-    launch_station "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "$WORKSPACE_FOLDER" "$DDS_CONFIG_FILE" "$QOS_PROFILE" "$QOS_DEPTH"
+    launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "$WORKSPACE_FOLDER" "$DDS_CONFIG_FILE" "$QOS_PROFILE" "$QOS_DEPTH"
   done
+  echo "Local tmux session 'post_launch' created with windows for each Pi."
+  echo "Attach using: tmux attach-session -t post_launch"
 fi
