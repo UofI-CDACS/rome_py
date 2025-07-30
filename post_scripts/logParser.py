@@ -10,7 +10,7 @@ REMOTE_LOG_DIR = '/home/rospi/Desktop/test_ws/loop'
 # Log type should be named log-{ID}-{PI}.txt
 LOG_PATTERN = re.compile(r'log-(?P<ID>[^-]+)-(?P<PI>[^.]+)\.txt')
 DATA_PATTERN = re.compile(r'(\w+)=([^;]+)')
-metrics = ['TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET']
+metrics = ['TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET', 'CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB']
 ip_list = [
     '172.23.254.18',
     '172.23.254.20',
