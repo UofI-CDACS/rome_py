@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles>
+
+  <!-- Participant profile named 'default', used unless overridden -->
+  <participant profile_name="default" is_default_profile="true">
+
+    <rtps>
+      <!-- Use built-in transports (including multicast) -->
+      <useBuiltinTransports>true</useBuiltinTransports>
+
+      <!-- No custom locators needed for multicast discovery -->
+    </rtps>
+
+  </participant>
+
+</profiles>
+

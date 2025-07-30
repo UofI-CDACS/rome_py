@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profiles>
+
+  <!-- Participant profile named 'default', used unless overridden -->
+  <participant profile_name="default" is_default_profile="true">
+
+    <rtps>
+      <!-- Disable built-in transports (multicast) -->
+      <useBuiltinTransports>false</useBuiltinTransports>
+
+      <!-- Define user transports with explicit unicast locators -->
+      <userDefinedTransports>
+        <transport_id>1</transport_id>
+        <locators>
+          <!-- List of peers with IP addresses and port (using default 7400)-->
+          <locator>
+            <kind>UDPv4</kind>
+            <address>172.23.254.20</address>
+            <port>7400</port>
+          </locator>
+          <locator>
+            <kind>UDPv4</kind>
+            <address>172.23.254.18</address>
+            <port>7400</port>
+          </locator>
+          <locator>
+            <kind>UDPv4</kind>
+            <address>172.23.254.22</address>
+            <port>7400</port>
+          </locator>
+          <locator>
+            <kind>UDPv4</kind>
+            <address>172.23.254.23</address>
+            <port>7400</port>
+          </locator>
+          <locator>
+            <kind>UDPv4</kind>
+            <address>172.23.254.24</address>
+            <port>7400</port>
+          </locator>
+        </locators>
+      </userDefinedTransports>
+    </rtps>
+
+  </participant>
+
+</profiles>
