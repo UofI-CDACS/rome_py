@@ -36,18 +36,11 @@ launch_station_tmux_local() {
   local session_name="post_launch"
   local window_name="${ip//./_}"
 
-  if ! tmux has-session -t "$session_name" 2>/dev/null; then
-    tmux new-session -d -s "$session_name" -n "$window_name"
-  else
-    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
-      tmux kill-window -t "${session_name}:$window_name"
-    fi
-    tmux new-window -t "$session_name" -n "$window_name"
-  fi
-  echo "Sessions:"
-  tmux list-sessions
-  echo "Windows in $session_name:"
-  tmux list-windows -t "$session_name"
+  # Kill entire session if it exists (ignore error if not)
+  tmux kill-session -t "$session_name" 2>/dev/null || true
+
+  # Create new session with the window
+  tmux new-session -d -s "$session_name" -n "$window_name"
 
   local remote_cmd="cd \"$ws_path\""
   remote_cmd+=" && chmod -R +rwx ."
@@ -60,17 +53,6 @@ launch_station_tmux_local() {
   remote_cmd+=" --type default"
   remote_cmd+=" --lossmode $qos_profile"
   remote_cmd+=" --depth $qos_depth"
-
-  # Wait until window is ready
-  for i in {1..10}; do
-    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
-      break
-    fi
-    sleep 0.1
-  done
-
-  # Select the window explicitly before sending keys
-  tmux select-window -t "${session_name}:${window_name}"
 
   tmux send-keys -t "${session_name}:${window_name}" \
     "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c '$remote_cmd'" C-m
