@@ -14,6 +14,7 @@ declare -A PI_USERS=(
   [172.23.254.22]="rospi"
   [172.23.254.23]="rospi"
   [172.23.254.24]="rospi"
+  [127.0.0.1]="rospi"
 )
 
 declare -A PI_NAMES=(
@@ -21,6 +22,15 @@ declare -A PI_NAMES=(
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
   [172.23.254.18]="rospi_4"
+  [127.0.0.1]="graveyard"
+)
+
+declare -A PI_TYPES=(
+  [172.23.254.18]="default"
+  [172.23.254.22]="default"
+  [172.23.254.23]="default"
+  [172.23.254.24]="default"
+  [127.0.0.1]="graveyard"
 )
 
 # === Launch using local tmux session ===
@@ -28,10 +38,11 @@ launch_station_tmux_local() {
   local ip="$1"
   local user="$2"
   local node_name="$3"
-  local ws_path="$4"
-  local dds_config="$5"
-  local qos_profile="$6"
-  local qos_depth="$7"
+  local node_type="$4"
+  local ws_path="$5"
+  local dds_config="$6"
+  local qos_profile="$7"
+  local qos_depth="$8"
 
   local session_name="post_launch"
   local window_name="${ip//./_}"
@@ -46,17 +57,17 @@ launch_station_tmux_local() {
     tmux new-window -t "$session_name" -n "$window_name"
   fi
 
-  local remote_cmd="cd \"$ws_path\""
+  local remote_cmd="cd \"${ws_path}\""
   remote_cmd+=" && chmod -R +rwx ."
-  remote_cmd+=" && source \"$ws_path/src/post/post_scripts/$dds_config\" \"$ws_path\""
+  remote_cmd+=" && source \"${ws_path}/src/post/post_scripts/${dds_config}\" \"${ws_path}\""
   remote_cmd+=" && set +u"
-  remote_cmd+=" && source \"$ws_path/install/setup.bash\""
+  remote_cmd+=" && source \"${ws_path}/install/setup.bash\""
   remote_cmd+=" && set -u"
   remote_cmd+=" && ros2 run post_core station"
-  remote_cmd+=" --name $node_name"
-  remote_cmd+=" --type default"
-  remote_cmd+=" --lossmode $qos_profile"
-  remote_cmd+=" --depth $qos_depth"
+  remote_cmd+=" --name ${node_name}"
+  remote_cmd+=" --type ${node_type}"
+  remote_cmd+=" --lossmode ${qos_profile}"
+  remote_cmd+=" --depth ${qos_depth}"
 
   tmux send-keys -t "${session_name}:${window_name}" \
     "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c '$remote_cmd'" C-m
@@ -127,7 +138,7 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
     tmux kill-session -t post_launch
   fi
   for ip in "${!PI_USERS[@]}"; do
-    launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+    launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
   done
   echo "Local tmux session 'post_launch' created with windows for each Pi."
   echo "Attach using: tmux attach-session -t post_launch"
