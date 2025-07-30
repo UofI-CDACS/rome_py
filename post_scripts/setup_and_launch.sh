@@ -36,11 +36,15 @@ launch_station_tmux_local() {
   local session_name="post_launch"
   local window_name="${ip//./_}"
 
-  # Kill entire session if it exists (ignore error if not)
-  tmux kill-session -t "$session_name" 2>/dev/null || true
-
-  # Create new session with the window
-  tmux new-session -d -s "$session_name" -n "$window_name"
+  # Create new window (or session if none exists)
+  if ! tmux has-session -t "$session_name" 2>/dev/null; then
+    tmux new-session -d -s "$session_name" -n "$window_name"
+  else
+    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
+      tmux kill-window -t "${session_name}:$window_name"
+    fi
+    tmux new-window -t "$session_name" -n "$window_name"
+  fi
 
   local remote_cmd="cd \"$ws_path\""
   remote_cmd+=" && chmod -R +rwx ."
@@ -119,6 +123,9 @@ if [[ "${BUILD_WORKSPACE}" == "TRUE" ]]; then
 fi
 
 if [[ "${SSH_PIS}" == "TRUE" ]]; then
+  if tmux has-session -t post_launch 2>/dev/null; then
+    tmux kill-session -t post_launch
+  fi
   for ip in "${!PI_USERS[@]}"; do
     launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
   done
