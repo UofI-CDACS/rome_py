@@ -57,6 +57,17 @@ launch_station_tmux_local() {
   remote_cmd+=" --lossmode $qos_profile"
   remote_cmd+=" --depth $qos_depth"
 
+  # Wait until window is ready
+  for i in {1..10}; do
+    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
+      break
+    fi
+    sleep 0.1
+  done
+
+  # Select the window explicitly before sending keys
+  tmux select-window -t "${session_name}:${window_name}"
+
   tmux send-keys -t "${session_name}:${window_name}" \
     "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c '$remote_cmd'" C-m
 }
