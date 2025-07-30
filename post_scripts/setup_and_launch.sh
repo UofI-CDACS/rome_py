@@ -22,7 +22,7 @@ declare -A PI_NAMES=(
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
   [172.23.254.18]="rospi_4"
-  [127.0.0.1]="graveyard"
+  [127.0.0.1]="default_graveyard"
 )
 
 declare -A PI_TYPES=(
