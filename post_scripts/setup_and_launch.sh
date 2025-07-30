@@ -44,6 +44,10 @@ launch_station_tmux_local() {
     fi
     tmux new-window -t "$session_name" -n "$window_name"
   fi
+  echo "Sessions:"
+  tmux list-sessions
+  echo "Windows in $session_name:"
+  tmux list-windows -t "$session_name"
 
   local remote_cmd="cd \"$ws_path\""
   remote_cmd+=" && chmod -R +rwx ."
