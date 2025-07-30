@@ -13,7 +13,23 @@ validate_branch() {
 # Returns git commands as a string to be run locally or remotely
 git_sync_cmds() {
   local branch=$1
-  cat <<EOF
+  local force=$2 # "true" or "false"
+
+  if [[ "$force" == "true" ]]; then
+    cat <<EOF
+set -e
+if [ ! -d post ]; then
+  git clone https://github.com/UofI-CDACS/rome_py.git post
+fi
+cd post
+git fetch --all
+git reset --hard
+git checkout -f "$branch"
+git reset --hard origin/$branch
+git pull origin "$branch"
+EOF
+  else
+    cat <<EOF
 set -e
 if [ ! -d post ]; then
   git clone https://github.com/UofI-CDACS/rome_py.git post
@@ -25,18 +41,20 @@ if [ "\$current_branch" != "$branch" ]; then
   git checkout "$branch"
 fi
 git reset --hard origin/$branch
-git pull origin $branch
+git pull origin "$branch"
 EOF
+  fi
 }
 
 sync_git_repo() {
   local path=$1
   local branch=$2
-  # Validate branch before use
+  local force=$3 # "true" or "false"
+
   validate_branch "$branch"
 
   cd "$path"
-  eval "$(git_sync_cmds "$branch")"
+  eval "$(git_sync_cmds "$branch" "$force")"
 }
 
 sync_git_repo_ssh() {
@@ -45,8 +63,8 @@ sync_git_repo_ssh() {
   local user=$3
   local path=$4
   local branch=$5
+  local force=$6 # "true" or "false"
 
-  # Validate branch before use
   validate_branch "$branch"
 
   if ! declare -f ssh_run >/dev/null; then
@@ -55,5 +73,5 @@ sync_git_repo_ssh() {
   fi
 
   echo "[$label] Syncing repo..."
-  ssh_run "$ip" "$user" "$(git_sync_cmds "$branch")"
+  ssh_run "$ip" "$user" "$(git_sync_cmds "$branch" "$force")"
 }
