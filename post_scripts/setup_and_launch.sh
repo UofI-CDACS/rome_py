@@ -84,7 +84,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" \
   --text="Configure Launch Parameters" \
   --field="Workspace Folder:TXT" "${DEFAULT_WORKSPACE}" \
   --field="Branch Name:TXT" "${DEFAULT_BRANCH}" \
-  --field="DDS Config:CB" "cyclone_source.sh!fast_source.sh" \
+  --field="DDS Config:CB" "cyclonedds_source.sh!fastrtps_source.sh" \
   --field="QOS Profile:CB" "lossless!lossy" \
   --field="QOS Depth:NUM" "${DEFAULT_QOS_DEPTH}" \
   --field="Pull from GitHub:CHK" "TRUE" \
