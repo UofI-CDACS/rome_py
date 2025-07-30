@@ -120,7 +120,7 @@ FORCE_GIT=$([[ "$FORCE_GIT" == "TRUE" ]] && echo "true" || echo "false")
 # === Main Execution ===
 
 if [[ "$PULL_GITHUB" == "TRUE" ]]; then
-  sync_git_repo "${SRC_PATH}" "${BRANCH_NAME}" "${FORCE_GIT}"
+  #sync_git_repo "${SRC_PATH}" "${BRANCH_NAME}" "${FORCE_GIT}"
   for ip in "${!PI_USERS[@]}"; do
     sync_git_repo_ssh "REMOTE $ip" "$ip" "${PI_USERS[$ip]}" "${SRC_PATH}" "${BRANCH_NAME}" "${FORCE_GIT}"
   done

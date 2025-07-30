@@ -27,6 +27,7 @@ git reset --hard
 git checkout -f "$branch"
 git reset --hard origin/$branch
 git pull origin "$branch"
+git reset --hard
 EOF
   else
     cat <<EOF
@@ -40,7 +41,6 @@ current_branch=\$(git rev-parse --abbrev-ref HEAD)
 if [ "\$current_branch" != "$branch" ]; then
   git checkout "$branch"
 fi
-git reset --hard origin/$branch
 git pull origin "$branch"
 EOF
   fi
