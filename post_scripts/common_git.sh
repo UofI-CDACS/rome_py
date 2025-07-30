@@ -39,7 +39,7 @@ sync_git_repo() {
   eval "$(git_sync_cmds "$branch")"
 }
 
-sync_git_repo_block() {
+sync_git_repo_ssh() {
   local label=$1
   local ip=$2
   local user=$3
