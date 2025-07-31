@@ -17,17 +17,29 @@ git_sync_cmds() {
 
   if [[ "$force" == "true" ]]; then
     cat <<EOF
-set -e
-if [ ! -d post ]; then
-  git clone https://github.com/UofI-CDACS/rome_py.git post
-fi
-cd post
-git fetch --all
-git reset --hard
-git checkout -f "$branch"
-git reset --hard origin/$branch
-git pull origin "$branch"
-git reset --hard
+    #In workspace/src
+    PROJECT_NAME="post"
+    PROJECT_DIR="\${HOME}/Desktop/test_ws/src"
+    REMOTE="https://github.com/UofI-CDACS/rome_py.git"
+    cd "\${PROJECT_DIR}"
+    # In project directory
+    if [ ! -d "\${PROJECT_NAME}" ]; then
+      git clone "\${REMOTE}" "\${PROJECT_NAME}"
+    fi
+    
+    cd "\${PROJECT_NAME}"
+    git fetch --prune origin
+    
+    # Switch to the branch (track if it doesn't exist)
+    if git show-ref --verify --quiet "refs/heads/${branch}"; then
+      git switch "${branch}"
+    else
+      git switch --track "origin/${branch}"
+    fi
+    
+    # Make sure the local branch exactly matches the remote
+    git reset --hard "origin/${branch}"
+    git clean -fd
 EOF
   else
     cat <<EOF
