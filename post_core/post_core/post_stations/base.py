@@ -14,33 +14,21 @@ class Station(Node):
         self.loss_mode = loss_mode
         self.depth = depth
         if loss_mode == 'lossless':
-            self.sub_qos_profile = QoSProfile(
+            self.qos_profile = QoSProfile(
                 reliability=ReliabilityPolicy.RELIABLE,
                 durability=DurabilityPolicy.TRANSIENT_LOCAL,
                 depth=depth,
-                history=HistoryPolicy.KEEP_ALL
-            )
-            self.pub_qos_profile = QoSProfile(
-                reliability=ReliabilityPolicy.RELIABLE,
-                durability=DurabilityPolicy.TRANSIENT_LOCAL,
-                depth=1000,
                 history=HistoryPolicy.KEEP_ALL
             )
         else:
-            self.sub_qos_profile = QoSProfile(
+            self.qos_profile = QoSProfile(
                 reliability=ReliabilityPolicy.BEST_EFFORT,
                 durability=DurabilityPolicy.VOLATILE,
                 depth=depth,
                 history=HistoryPolicy.KEEP_LAST
             )
-            self.pub_qos_profile = QoSProfile(
-                reliability=ReliabilityPolicy.BEST_EFFORT,
-                durability=DurabilityPolicy.VOLATILE,
-                depth=10,
-                history=HistoryPolicy.KEEP_LAST
-            )
         
-        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.pub_qos_profile)
+        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
         kill_signal = StationKill()
         kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
         kill_signal_pub.publish(kill_signal)
@@ -72,7 +60,7 @@ class Station(Node):
 
     def send_parcel(self, parcel, next_location: str):
         topic = f'{next_location}/parcels'
-        publisher = self.get_publisher(topic, self.pub_qos_profile)
+        publisher = self.get_publisher(topic, self.qos_profile)
         publisher.publish(parcel)
 
     def _on_parcel_received(self, parcel):
