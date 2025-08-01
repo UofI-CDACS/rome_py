@@ -69,13 +69,13 @@ for identifier in identifiers:
         df_all = pd.concat([df_transactions, df_graveyard], ignore_index=True)
         df_all = df_all.sort_values(['MSGID', 'TIMESTAMP'])
         
-        # Calculate time differences between consecutive timestamps for each MSGID
+        # Fix: Remove the line break in df_all
         df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
         
-        # Fix: Handle the timedelta calculation properly
-        time_diff = df_all['TIMESTAMP'] - df_all['PREV_TIMESTAMP']
-        # Convert to milliseconds only where both timestamps exist
-        df_all['TIME_AT_STATION'] = time_diff.dt.total_seconds() * 1000
+        # Handle the timedelta calculation properly
+        # Only calculate time diff where both timestamps exist (not NaN)
+        mask = df_all['PREV_TIMESTAMP'].notna()
+        df_all.loc[mask, 'TIME_AT_STATION'] = (df_all.loc[mask, 'TIMESTAMP'] - df_all.loc[mask, 'PREV_TIMESTAMP']).dt.total_seconds() * 1000
         
         # Remove first entry for each MSGID (no previous timestamp)
         df_station_times = df_all[df_all['TIME_AT_STATION'].notna()]
