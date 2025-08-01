@@ -75,7 +75,7 @@ class Station(Node):
             asyncio.ensure_future(self.parcel_callback(parcel))
    
     def _on_kill_signal(self, kill_signal):
-        if (int(dt.datetime.now().timestamp()) - kill_signal.timestamp ) > 100000:
+        if (int(dt.datetime.now().timestamp()) - kill_signal.timestamp ) > 10:
             self.get_logger().info(f"Kill Message: {kill_signal.kill_msg}")
             raise SystemExit
 
