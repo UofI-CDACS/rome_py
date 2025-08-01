@@ -66,7 +66,7 @@ for identifier in identifiers:
 
         # Calculate time differences between consecutive timestamps for each MSGID
         df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
-        df_all['TIME_AT_STATION'] = (df_all['TIMESTAMP'] - df_all['PREV_TIMESTAMP']).dt.total_seconds() * 1000
+        df_all['TIME_AT_STATION'] = (pd.to_timedelta(df_all['nanoseconds'], unit='ns').dt.total_seconds() - pd.to_timedelta(df_all['nanoseconds'], unit='ns').dt.total_seconds()) * 1000
 
         # Remove first entry for each MSGID (no previous timestamp)
         df_station_times = df_all[df_all['TIME_AT_STATION'].notna()]
