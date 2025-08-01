@@ -14,16 +14,9 @@ for identifier in identifiers:
     
     # Check if both files exist
     if os.path.exists(log_file) and os.path.exists(graveyard_file):
-        # Define column names based on your actual headers
-        log_columns = [
-            'TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 
-            'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET',
-            'CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 
-            'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB', 'ttl'
-        ]
-        
-        df_transactions = pd.read_csv(log_file, names=log_columns)
-        df_graveyard = pd.read_csv(graveyard_file, names=log_columns)
+        # Read CSV files with header row
+        df_transactions = pd.read_csv(log_file)
+        df_graveyard = pd.read_csv(graveyard_file)
         
         # Debug: Print data types before conversion
         print(f"TIMESTAMP dtype before conversion: {df_transactions['TIMESTAMP'].dtype}")
@@ -102,6 +95,9 @@ for identifier in identifiers:
         print(f"TIMESTAMP dtype in df_all: {df_all['TIMESTAMP'].dtype}")
         print(f"PREV_TIMESTAMP dtype: {df_all['PREV_TIMESTAMP'].dtype}")
         
+        # Initialize TIME_AT_STATION column
+        df_all['TIME_AT_STATION'] = pd.NA
+        
         # Handle the timedelta calculation properly
         # Only calculate time diff where both timestamps exist (not NaN) AND are datetime
         mask = (df_all['PREV_TIMESTAMP'].notna() & 
@@ -116,8 +112,11 @@ for identifier in identifiers:
 
         # Calculate jitter - time between transactions at the same station
         df_jitter = df_all.copy()
-        df_jitter = df_jitter.sort_values(['PINAME', 'TIMESTAMP'])  # Fixed: use PINAME
-        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('PINAME')['TIMESTAMP'].shift(-1)  # Fixed: use PINAME
+        df_jitter = df_jitter.sort_values(['PINAME', 'TIMESTAMP'])
+        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('PINAME')['TIMESTAMP'].shift(-1)
+        
+        # Initialize JITTER column
+        df_jitter['JITTER'] = pd.NA
         
         # Handle the jitter calculation properly - check for NaN values and datetime types
         mask_jitter = (df_jitter['NEXT_TIMESTAMP'].notna() & 
@@ -131,13 +130,17 @@ for identifier in identifiers:
         df_jitter = df_jitter[df_jitter['JITTER'].notna()]
         
         df_parcels_per_second = df_all.copy()
-        # Calculate parcels per second for each station
-        df_parcels_per_second['SECOND'] = df_parcels_per_second['TIMESTAMP'].dt.floor('S')
-        parcels_per_second = df_parcels_per_second.groupby(['PINAME', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')  # Fixed: use PINAME
-        
-        # Get average parcels per second for each station
-        avg_parcels_per_second = parcels_per_second.groupby('PINAME')['PARCELS_PER_SECOND'].mean().reset_index()  # Fixed: use PINAME
-        avg_parcels_per_second.rename(columns={'PARCELS_PER_SECOND': 'AVG_PARCELS_PER_SECOND'}, inplace=True)
+        # Calculate parcels per second for each station - only if timestamps are valid
+        if pd.api.types.is_datetime64_any_dtype(df_parcels_per_second['TIMESTAMP']):
+            df_parcels_per_second['SECOND'] = df_parcels_per_second['TIMESTAMP'].dt.floor('S')
+            parcels_per_second = df_parcels_per_second.groupby(['PINAME', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')
+            
+            # Get average parcels per second for each station
+            avg_parcels_per_second = parcels_per_second.groupby('PINAME')['PARCELS_PER_SECOND'].mean().reset_index()
+            avg_parcels_per_second.rename(columns={'PARCELS_PER_SECOND': 'AVG_PARCELS_PER_SECOND'}, inplace=True)
+        else:
+            # Create empty dataframe if timestamps aren't valid
+            avg_parcels_per_second = pd.DataFrame(columns=['PINAME', 'AVG_PARCELS_PER_SECOND'])
 
         df_parcel_lifetime = df_all.copy()
         # Calculate lifetime of each parcel
@@ -153,19 +156,33 @@ for identifier in identifiers:
             parcels_lost_per_second['SECOND'] = parcels_lost_per_second['TIMESTAMP'].dt.floor('S')
             parcels_lost_per_second = parcels_lost_per_second.groupby(['IN_GRAVEYARD', 'SECOND']).agg({'LOST_COUNT': 'max'}).reset_index()
             parcels_lost_per_second.rename(columns={'LOST_COUNT': 'PARCELS_LOST_PER_SECOND'}, inplace=True)
+        else:
+            # Create empty dataframe if timestamps aren't valid
+            parcels_lost_per_second = pd.DataFrame(columns=['IN_GRAVEYARD', 'SECOND', 'PARCELS_LOST_PER_SECOND'])
         
         # Merge additional system metrics by MSGID and TIMESTAMP
         system_metrics = ['CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB']
-        df_system_metrics = df_all[['MSGID', 'TIMESTAMP', 'PINAME'] + system_metrics].drop_duplicates()
+        # Only include metrics that exist in the dataframe
+        available_metrics = [col for col in system_metrics if col in df_all.columns]
+        df_system_metrics = df_all[['MSGID', 'TIMESTAMP', 'PINAME'] + available_metrics].drop_duplicates()
 
         # Merge all data together - Fixed column references
         df_combined = df_parcel_status.merge(df_lost_over_time[['MSGID', 'LOST_COUNT']], on='MSGID', how='left')
-        df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
-        df_combined = df_combined.merge(df_jitter[['PINAME', 'JITTER']], on='PINAME', how='left')  # Fixed: use PINAME
-        df_combined = df_combined.merge(avg_parcels_per_second, on='PINAME', how='left')  # Fixed: use PINAME
+        
+        if not df_station_times.empty:
+            df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
+        
+        if not df_jitter.empty and 'PINAME' in df_combined.columns:
+            df_combined = df_combined.merge(df_jitter[['PINAME', 'JITTER']], on='PINAME', how='left')
+        
+        if not avg_parcels_per_second.empty and 'PINAME' in df_combined.columns:
+            df_combined = df_combined.merge(avg_parcels_per_second, on='PINAME', how='left')
+        
         df_combined = df_combined.merge(df_parcel_lifetime, on='MSGID', how='left')
-        if pd.api.types.is_datetime64_any_dtype(parcels_lost_per_second.get('SECOND', pd.Series(dtype='object'))):
-            df_combined = df_combined.merge(parcels_lost_per_second, on=['IN_GRAVEYARD', 'SECOND'], how='left')
+        
+        if not parcels_lost_per_second.empty:
+            df_combined = df_combined.merge(parcels_lost_per_second, on=['IN_GRAVEYARD'], how='left')
+        
         df_combined = df_combined.merge(df_system_metrics, on=['MSGID', 'TIMESTAMP'], how='left')
         df_combined.to_csv(f"/var/lib/Logsforgrafana/combined_analysis_{identifier}.csv", index=False)
 
