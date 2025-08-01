@@ -22,7 +22,9 @@ main() {
   export CYCLONEDDS_URI="$config_file"
   export ROS_DOMAIN_ID=42
 
+  set +u
   source "$ros_setup"
+  set -u
 }
 
 main "$@"

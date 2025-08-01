@@ -80,8 +80,8 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" "$WORKSPACE_FOLDER"
 source "$WORKSPACE_FOLDER/install/setup.bash"
+source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" "$WORKSPACE_FOLDER"
 
 if [ -n "$PARAMS" ]; then
     PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s .)
