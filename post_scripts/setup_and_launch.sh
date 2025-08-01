@@ -58,12 +58,12 @@ launch_station_tmux_local() {
   fi
 
   local remote_cmd="cd \"${ws_path}\""
+  remote_cmd+=" && pkill -f ros2"
+  remote_cmd+=" && sleep 2"
   remote_cmd+=" && chmod -R +rwx ."
   remote_cmd+=" && source \"${ws_path}/src/post/post_scripts/${dds_config}\" \"${ws_path}\""
   remote_cmd+=" && set +u"
   remote_cmd+=" && source \"${ws_path}/install/setup.bash\""
-  remote_cmd+=" && pkill -f 'ros2 run post_core station'"
-  remote_cmd+=" && sleep 2"
   remote_cmd+=" && ros2 run post_core station"
   remote_cmd+=" --name ${node_name}"
   remote_cmd+=" --type ${node_type}"
