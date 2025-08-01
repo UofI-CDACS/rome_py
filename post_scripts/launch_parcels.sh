@@ -80,7 +80,7 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" \""$WORKSPACE_FOLDER"\"
+source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" "$WORKSPACE_FOLDER"
 source "$WORKSPACE_FOLDER/install/setup.bash"
 
 if [ -n "$PARAMS" ]; then
