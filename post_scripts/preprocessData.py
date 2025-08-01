@@ -77,7 +77,7 @@ for identifier in identifiers:
         df_all = pd.concat([df_transactions, df_graveyard], ignore_index=True)
         df_all = df_all.sort_values(['MSGID', 'TIMESTAMP'])
         
-        # Calculate time differences between consecutive timestamps for each MSGID
+        # Fix: Remove the line break in df_all
         df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
         
         # Handle the timedelta calculation properly
