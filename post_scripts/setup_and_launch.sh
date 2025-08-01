@@ -145,8 +145,8 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
     tmux kill-session -t post_launch
   fi
   for ip in "${!PI_USERS[@]}"; do
-
     launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+    sleep(2)
   done
   echo "Local tmux session 'post_launch' created with windows for each Pi."
   echo "Attach using: tmux attach-session -t post_launch"
