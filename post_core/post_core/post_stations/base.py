@@ -4,6 +4,7 @@ from rclpy.node import Node
 from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 import threading
+import datetime as dt
 
 class Station(Node):
     def __init__(self, name=None, loss_mode='lossy', depth=10):
@@ -31,7 +32,10 @@ class Station(Node):
         kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
         kill_signal = StationKill()
         kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
+        kill_signal.timestamp = int(dt.datetime.now().timestamp())
         kill_signal_pub.publish(kill_signal)
+        
+        
 
         self.subscription = self.create_subscription(
             Parcel,
@@ -73,8 +77,9 @@ class Station(Node):
             asyncio.ensure_future(self.parcel_callback(parcel))
    
     def _on_kill_signal(self, kill_signal):
-        self.get_logger().info(f"Kill Message: {kill_signal.kill_msg}")
-        raise SystemExit
+        if not (int(dt.datetime.now().timestamp()) - kill_signal.timestamp ) > 1:
+            self.get_logger().info(f"Kill Message: {kill_signal.kill_msg}")
+            raise SystemExit
 
     async def parcel_callback(self, parcel: Parcel):
         # To be overridden by subclasses
