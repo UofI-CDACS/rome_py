@@ -40,7 +40,7 @@ class Station(Node):
                 history=HistoryPolicy.KEEP_LAST
             )
         
-        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', pub_qos_profile)
+        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.pub_qos_profile)
         kill_signal = StationKill()
         kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
         kill_signal_pub.publish(kill_signal)
