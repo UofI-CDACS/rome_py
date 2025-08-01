@@ -10,27 +10,27 @@ source "${SCRIPT_DIR}/common_build.sh"
 
 # === Configurable Mappings ===
 declare -A PI_USERS=(
+  [127.0.0.1]="rospi"
   [172.23.254.18]="rospi"
   [172.23.254.22]="rospi"
   [172.23.254.23]="rospi"
   [172.23.254.24]="rospi"
-  [127.0.0.1]="rospi"
 )
 
 declare -A PI_NAMES=(
+  [127.0.0.1]="default_graveyard"
   [172.23.254.24]="rospi_1"
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
   [172.23.254.18]="rospi_4"
-  [127.0.0.1]="default_graveyard"
 )
 
 declare -A PI_TYPES=(
+  [127.0.0.1]="graveyard"
   [172.23.254.18]="default"
   [172.23.254.22]="default"
   [172.23.254.23]="default"
   [172.23.254.24]="default"
-  [127.0.0.1]="graveyard"
 )
 
 # === Launch using local tmux session ===
