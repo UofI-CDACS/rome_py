@@ -15,7 +15,7 @@ class GraveyardStation(Station):
             self.get_logger().warn(f"No instruction set found for graveyard")
             return
 
-        self.get_logger().info(f"Running instruction set '{parcel.instruction_set}' for parcel {parcel.parcel_id}")
+        self.get_logger().info(f"Running instruction set graveyard for parcel {parcel.parcel_id}")
         instruction_set = InstructionSetClass()
         await instruction_set.run(self, parcel)
         self.get_logger().info(f"Parcel {parcel.parcel_id} processed successfully.")
