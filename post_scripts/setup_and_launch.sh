@@ -63,6 +63,7 @@ launch_station_tmux_local() {
   remote_cmd+=" && set +u"
   remote_cmd+=" && source \"${ws_path}/install/setup.bash\""
   remote_cmd+=" && set -u"
+  remote_cmd+=" && pkill -f 'ros2 run post_core' || true"
   remote_cmd+=" && ros2 run post_core station"
   remote_cmd+=" --name ${node_name}"
   remote_cmd+=" --type ${node_type}"
@@ -144,6 +145,7 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
     tmux kill-session -t post_launch
   fi
   for ip in "${!PI_USERS[@]}"; do
+
     launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
   done
   echo "Local tmux session 'post_launch' created with windows for each Pi."
