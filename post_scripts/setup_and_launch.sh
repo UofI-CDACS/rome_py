@@ -63,7 +63,6 @@ launch_station_tmux_local() {
   remote_cmd+=" && set +u"
   remote_cmd+=" && source \"${ws_path}/install/setup.bash\""
   #remote_cmd+=" && pkill -f post_core"
-  remote_cmd+=" && sleep 2"
   remote_cmd+=" && ros2 run post_core station"
   remote_cmd+=" --name ${node_name}"
   remote_cmd+=" --type ${node_type}"
