@@ -75,8 +75,14 @@ launch_station_tmux_local() {
 
 # === YAD Form ===
 DEFAULT_WORKSPACE="${HOME}/Desktop/test_ws"
-DEFAULT_BRANCH="doc_and_cleanup"
-DEFAULT_DDS="cyclone_source.sh"
+if [[ -d "${DEFAULT_WORKSPACE}/src/post" ]]; then
+  cd "${DEFAULT_WORKSPACE}/src/post"
+  DEFAULT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+  cd - > /dev/null
+else
+  DEFAULT_BRANCH="main"
+fi
+DEFAULT_DDS="cyclonedds_source.sh"
 DEFAULT_QOS_PROFILE="lossless"
 DEFAULT_QOS_DEPTH="10"
 
