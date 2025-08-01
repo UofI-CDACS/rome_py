@@ -14,23 +14,41 @@ for identifier in identifiers:
     
     # Check if both files exist
     if os.path.exists(log_file) and os.path.exists(graveyard_file):
-        # Define column names based on your log format
+        # Define column names based on your actual headers
         log_columns = [
-            'TIMESTAMP', 'CURRENT_STATION', 'MSGID', 'OWNER', 
-            'PREV_LOCATION', 'NEXT_LOCATION', 'INSTRUCTION_SET',
+            'TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 
+            'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET',
             'CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 
-            'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB', 'TTL'
+            'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB', 'ttl'
         ]
         
         df_transactions = pd.read_csv(log_file, names=log_columns)
         df_graveyard = pd.read_csv(graveyard_file, names=log_columns)
         
-        # Convert nanoseconds if needed
-        if df_transactions['TIMESTAMP'].dtype == 'int64':
-            df_transactions['TIMESTAMP'] = pd.to_datetime(df_transactions['TIMESTAMP'], unit='ns')
-
-        if df_graveyard['TIMESTAMP'].dtype == 'int64':
-            df_graveyard['TIMESTAMP'] = pd.to_datetime(df_graveyard['TIMESTAMP'], unit='ns')
+        # Debug: Print data types before conversion
+        print(f"TIMESTAMP dtype before conversion: {df_transactions['TIMESTAMP'].dtype}")
+        print(f"Sample TIMESTAMP values: {df_transactions['TIMESTAMP'].head()}")
+        
+        # Convert TIMESTAMP to datetime - handle both string and numeric formats
+        def convert_timestamp(df):
+            if df['TIMESTAMP'].dtype == 'object':  # String format
+                try:
+                    # Try to convert as nanoseconds first
+                    df['TIMESTAMP'] = pd.to_numeric(df['TIMESTAMP'], errors='coerce')
+                    df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], unit='ns')
+                except:
+                    # If that fails, try direct datetime conversion
+                    df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], errors='coerce')
+            elif df['TIMESTAMP'].dtype in ['int64', 'float64']:  # Numeric format
+                df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], unit='ns')
+            return df
+        
+        df_transactions = convert_timestamp(df_transactions)
+        df_graveyard = convert_timestamp(df_graveyard)
+        
+        # Debug: Print data types after conversion
+        print(f"TIMESTAMP dtype after conversion: {df_transactions['TIMESTAMP'].dtype}")
+        print(f"Sample converted TIMESTAMP values: {df_transactions['TIMESTAMP'].head()}")
           
         # Calculate data volume per second
         df_all_messages = pd.concat([df_transactions, df_graveyard], ignore_index=True)
@@ -77,25 +95,37 @@ for identifier in identifiers:
         df_all = pd.concat([df_transactions, df_graveyard], ignore_index=True)
         df_all = df_all.sort_values(['MSGID', 'TIMESTAMP'])
         
-        # Fix: Remove the line break in df_all
+        # Calculate time differences between consecutive timestamps for each MSGID
         df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
         
+        # Debug: Check data types before arithmetic operations
+        print(f"TIMESTAMP dtype in df_all: {df_all['TIMESTAMP'].dtype}")
+        print(f"PREV_TIMESTAMP dtype: {df_all['PREV_TIMESTAMP'].dtype}")
+        
         # Handle the timedelta calculation properly
-        # Only calculate time diff where both timestamps exist (not NaN)
-        mask = df_all['PREV_TIMESTAMP'].notna()
-        df_all.loc[mask, 'TIME_AT_STATION'] = (df_all.loc[mask, 'TIMESTAMP'] - df_all.loc[mask, 'PREV_TIMESTAMP']).dt.total_seconds() * 1000
+        # Only calculate time diff where both timestamps exist (not NaN) AND are datetime
+        mask = (df_all['PREV_TIMESTAMP'].notna() & 
+                pd.api.types.is_datetime64_any_dtype(df_all['TIMESTAMP']) &
+                pd.api.types.is_datetime64_any_dtype(df_all['PREV_TIMESTAMP']))
+        
+        if mask.any():
+            df_all.loc[mask, 'TIME_AT_STATION'] = (df_all.loc[mask, 'TIMESTAMP'] - df_all.loc[mask, 'PREV_TIMESTAMP']).dt.total_seconds() * 1000
         
         # Remove first entry for each MSGID (no previous timestamp)
         df_station_times = df_all[df_all['TIME_AT_STATION'].notna()]
 
         # Calculate jitter - time between transactions at the same station
         df_jitter = df_all.copy()
-        df_jitter = df_jitter.sort_values(['CURRENT_STATION', 'TIMESTAMP'])  # Fixed: use CURRENT_STATION
-        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('CURRENT_STATION')['TIMESTAMP'].shift(-1)  # Fixed: use CURRENT_STATION
+        df_jitter = df_jitter.sort_values(['PINAME', 'TIMESTAMP'])  # Fixed: use PINAME
+        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('PINAME')['TIMESTAMP'].shift(-1)  # Fixed: use PINAME
         
-        # Handle the jitter calculation properly - check for NaN values
-        mask_jitter = df_jitter['NEXT_TIMESTAMP'].notna()
-        df_jitter.loc[mask_jitter, 'JITTER'] = (df_jitter.loc[mask_jitter, 'NEXT_TIMESTAMP'] - df_jitter.loc[mask_jitter, 'TIMESTAMP']).dt.total_seconds() * 1000
+        # Handle the jitter calculation properly - check for NaN values and datetime types
+        mask_jitter = (df_jitter['NEXT_TIMESTAMP'].notna() & 
+                      pd.api.types.is_datetime64_any_dtype(df_jitter['TIMESTAMP']) &
+                      pd.api.types.is_datetime64_any_dtype(df_jitter['NEXT_TIMESTAMP']))
+        
+        if mask_jitter.any():
+            df_jitter.loc[mask_jitter, 'JITTER'] = (df_jitter.loc[mask_jitter, 'NEXT_TIMESTAMP'] - df_jitter.loc[mask_jitter, 'TIMESTAMP']).dt.total_seconds() * 1000
         
         # Remove last entry for each station (no next timestamp)
         df_jitter = df_jitter[df_jitter['JITTER'].notna()]
@@ -103,34 +133,39 @@ for identifier in identifiers:
         df_parcels_per_second = df_all.copy()
         # Calculate parcels per second for each station
         df_parcels_per_second['SECOND'] = df_parcels_per_second['TIMESTAMP'].dt.floor('S')
-        parcels_per_second = df_parcels_per_second.groupby(['CURRENT_STATION', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')  # Fixed: use CURRENT_STATION
+        parcels_per_second = df_parcels_per_second.groupby(['PINAME', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')  # Fixed: use PINAME
         
         # Get average parcels per second for each station
-        avg_parcels_per_second = parcels_per_second.groupby('CURRENT_STATION')['PARCELS_PER_SECOND'].mean().reset_index()  # Fixed: use CURRENT_STATION
+        avg_parcels_per_second = parcels_per_second.groupby('PINAME')['PARCELS_PER_SECOND'].mean().reset_index()  # Fixed: use PINAME
         avg_parcels_per_second.rename(columns={'PARCELS_PER_SECOND': 'AVG_PARCELS_PER_SECOND'}, inplace=True)
 
         df_parcel_lifetime = df_all.copy()
         # Calculate lifetime of each parcel
-        df_parcel_lifetime['LIFETIME'] = (df_parcel_lifetime.groupby('MSGID')['TIMESTAMP'].transform('max') - df_parcel_lifetime.groupby('MSGID')['TIMESTAMP'].transform('min')).dt.total_seconds() * 1000
+        if pd.api.types.is_datetime64_any_dtype(df_parcel_lifetime['TIMESTAMP']):
+            df_parcel_lifetime['LIFETIME'] = (df_parcel_lifetime.groupby('MSGID')['TIMESTAMP'].transform('max') - df_parcel_lifetime.groupby('MSGID')['TIMESTAMP'].transform('min')).dt.total_seconds() * 1000
+        else:
+            df_parcel_lifetime['LIFETIME'] = 0  # Default value if timestamps aren't datetime
         df_parcel_lifetime = df_parcel_lifetime[['MSGID', 'LIFETIME']].drop_duplicates()
         
         # Calculate parcels lost per second
         parcels_lost_per_second = df_lost_over_time.copy()
-        parcels_lost_per_second['SECOND'] = parcels_lost_per_second['TIMESTAMP'].dt.floor('S')
-        parcels_lost_per_second = parcels_lost_per_second.groupby(['IN_GRAVEYARD', 'SECOND']).agg({'LOST_COUNT': 'max'}).reset_index()
-        parcels_lost_per_second.rename(columns={'LOST_COUNT': 'PARCELS_LOST_PER_SECOND'}, inplace=True)
+        if pd.api.types.is_datetime64_any_dtype(parcels_lost_per_second['TIMESTAMP']):
+            parcels_lost_per_second['SECOND'] = parcels_lost_per_second['TIMESTAMP'].dt.floor('S')
+            parcels_lost_per_second = parcels_lost_per_second.groupby(['IN_GRAVEYARD', 'SECOND']).agg({'LOST_COUNT': 'max'}).reset_index()
+            parcels_lost_per_second.rename(columns={'LOST_COUNT': 'PARCELS_LOST_PER_SECOND'}, inplace=True)
         
         # Merge additional system metrics by MSGID and TIMESTAMP
         system_metrics = ['CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB']
-        df_system_metrics = df_all[['MSGID', 'TIMESTAMP', 'CURRENT_STATION'] + system_metrics].drop_duplicates()
+        df_system_metrics = df_all[['MSGID', 'TIMESTAMP', 'PINAME'] + system_metrics].drop_duplicates()
 
         # Merge all data together - Fixed column references
         df_combined = df_parcel_status.merge(df_lost_over_time[['MSGID', 'LOST_COUNT']], on='MSGID', how='left')
         df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
-        df_combined = df_combined.merge(df_jitter[['CURRENT_STATION', 'JITTER']], on='CURRENT_STATION', how='left')  # Fixed: use CURRENT_STATION
-        df_combined = df_combined.merge(avg_parcels_per_second, on='CURRENT_STATION', how='left')  # Fixed: use CURRENT_STATION
+        df_combined = df_combined.merge(df_jitter[['PINAME', 'JITTER']], on='PINAME', how='left')  # Fixed: use PINAME
+        df_combined = df_combined.merge(avg_parcels_per_second, on='PINAME', how='left')  # Fixed: use PINAME
         df_combined = df_combined.merge(df_parcel_lifetime, on='MSGID', how='left')
-        df_combined = df_combined.merge(parcels_lost_per_second, on=['IN_GRAVEYARD', 'SECOND'], how='left')
+        if pd.api.types.is_datetime64_any_dtype(parcels_lost_per_second.get('SECOND', pd.Series(dtype='object'))):
+            df_combined = df_combined.merge(parcels_lost_per_second, on=['IN_GRAVEYARD', 'SECOND'], how='left')
         df_combined = df_combined.merge(df_system_metrics, on=['MSGID', 'TIMESTAMP'], how='left')
         df_combined.to_csv(f"/var/lib/Logsforgrafana/combined_analysis_{identifier}.csv", index=False)
 
