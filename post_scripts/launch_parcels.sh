@@ -70,7 +70,7 @@ if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
     IFS=',' read -ra PARAMS <<< "$PARAMS"
     echo "PARAMS: ${PARAMS[@]}"
 else
-    CUSTOM_PARAMS=""
+    PARAMS=""
 fi
 yad --question --title="Parse Logs" --text="Do you want to parse the logs?" --button=Yes:0 --button=No:1
 if [ $? -eq 0 ]; then
@@ -84,15 +84,9 @@ source "$WORKSPACE_FOLDER/install/setup.bash"
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" "$WORKSPACE_FOLDER"
 
 if [ -n "$PARAMS" ]; then
-    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s .)
-else
-    PARAMS_JSON="{}"
-fi
-
-if [ -n "$PARAMS" ]; then
     PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + [{"key": "ttl", "val": "'$TTL_VALUE'"}]')
 else
-PARAMS_JSON="['ttl:"$TTL_VALUE"']"
+    PARAMS_JSON='[{"key": "ttl", "val": "'$TTL_VALUE'"}]'
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 #gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
