@@ -2,197 +2,135 @@ import pandas as pd
 import os
 import glob
 import datetime as dt
+import gc
 
 # Get all log files and their identifiers
 log_files = glob.glob("/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-*.csv")
 identifiers = [os.path.basename(f).replace("log-", "").replace(".csv", "") for f in log_files]
 
+print(f"Found {len(identifiers)} log files to process")
+
 # Process each identifier
-for identifier in identifiers:
+for i, identifier in enumerate(identifiers):
+    print(f"Processing {i+1}/{len(identifiers)}: {identifier}")
+    
     log_file = f"/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-{identifier}.csv"
     graveyard_file = f"/home/rospi/Desktop/test_ws/graveyard/graveyard-{identifier}.csv"
     
     # Check if both files exist
     if os.path.exists(log_file) and os.path.exists(graveyard_file):
-        # Read CSV files with header row
-        df_transactions = pd.read_csv(log_file)
-        df_graveyard = pd.read_csv(graveyard_file)
-        
-        # Debug: Print data types before conversion
-        print(f"TIMESTAMP dtype before conversion: {df_transactions['TIMESTAMP'].dtype}")
-        print(f"Sample TIMESTAMP values: {df_transactions['TIMESTAMP'].head()}")
-        
-        # Convert TIMESTAMP to datetime - handle both string and numeric formats
-        def convert_timestamp(df):
-            if df['TIMESTAMP'].dtype == 'object':  # String format
-                try:
-                    # Try to convert as nanoseconds first
+        try:
+            # Read CSV files with header row
+            df_transactions = pd.read_csv(log_file)
+            df_graveyard = pd.read_csv(graveyard_file)
+            
+            # Skip empty files
+            if df_transactions.empty or df_graveyard.empty:
+                print(f"Skipping {identifier} - empty files")
+                continue
+            
+            # Convert TIMESTAMP to datetime - handle both string and numeric formats
+            def convert_timestamp(df):
+                if df['TIMESTAMP'].dtype == 'object':  # String format
                     df['TIMESTAMP'] = pd.to_numeric(df['TIMESTAMP'], errors='coerce')
                     df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], unit='ns')
-                except:
-                    # If that fails, try direct datetime conversion
-                    df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], errors='coerce')
-            elif df['TIMESTAMP'].dtype in ['int64', 'float64']:  # Numeric format
-                df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], unit='ns')
-            return df
-        
-        df_transactions = convert_timestamp(df_transactions)
-        df_graveyard = convert_timestamp(df_graveyard)
-        
-        # Debug: Print data types after conversion
-        print(f"TIMESTAMP dtype after conversion: {df_transactions['TIMESTAMP'].dtype}")
-        print(f"Sample converted TIMESTAMP values: {df_transactions['TIMESTAMP'].head()}")
-          
-        # Calculate data volume per second
-        df_all_messages = pd.concat([df_transactions, df_graveyard], ignore_index=True)
-        df_all_messages = df_all_messages.sort_values('TIMESTAMP')
-
-        # Identify missing parcel IDs
-        transaction_ids = set(df_transactions['MSGID'])
-        graveyard_ids = set(df_graveyard['MSGID'])
-
-        missing_ids = transaction_ids - graveyard_ids
-        
-        # Get last seen timestamp and count for each missing parcel
-        df_missing = df_transactions[df_transactions['MSGID'].isin(missing_ids)]
-        df_last_seen = df_missing.groupby('MSGID').agg({
-            'TIMESTAMP': 'max',
-            'MSGID': 'count'
-        }).rename(columns={'MSGID': 'COUNT'}).reset_index()
-        df_last_seen['IN_GRAVEYARD'] = False
-        
-        # Get last seen timestamp and count for parcels in graveyard
-        df_graveyard_last = df_graveyard.groupby('MSGID').agg({
-            'TIMESTAMP': 'max',
-            'MSGID': 'count'
-        }).rename(columns={'MSGID': 'COUNT'}).reset_index()
-        df_graveyard_last['IN_GRAVEYARD'] = True
-        
-        # Combine results
-        df_parcel_status = pd.concat([df_last_seen, df_graveyard_last], ignore_index=True)
-        
-        # Calculate lost parcels over time
-        df_lost_over_time = df_parcel_status.copy()
-        df_lost_over_time = df_lost_over_time.sort_values('TIMESTAMP')
-        
-        # Only increment counter for lost parcels (not in graveyard)
-        lost_count = 0
-        lost_counts = []
-        for _, row in df_lost_over_time.iterrows():
-            if not row['IN_GRAVEYARD']:
-                lost_count += 1
-            lost_counts.append(lost_count)
-        df_lost_over_time['LOST_COUNT'] = lost_counts
-        
-        # Calculate station-to-station bounce times
-        df_all = pd.concat([df_transactions, df_graveyard], ignore_index=True)
-        df_all = df_all.sort_values(['MSGID', 'TIMESTAMP'])
-        
-        # Calculate time differences between consecutive timestamps for each MSGID
-        df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
-        
-        # Debug: Check data types before arithmetic operations
-        print(f"TIMESTAMP dtype in df_all: {df_all['TIMESTAMP'].dtype}")
-        print(f"PREV_TIMESTAMP dtype: {df_all['PREV_TIMESTAMP'].dtype}")
-        
-        # Initialize TIME_AT_STATION column
-        df_all['TIME_AT_STATION'] = pd.NA
-        
-        # Handle the timedelta calculation properly
-        # Only calculate time diff where both timestamps exist (not NaN) AND are datetime
-        mask = (df_all['PREV_TIMESTAMP'].notna() & 
-                pd.api.types.is_datetime64_any_dtype(df_all['TIMESTAMP']) &
-                pd.api.types.is_datetime64_any_dtype(df_all['PREV_TIMESTAMP']))
-        
-        if mask.any():
-            df_all.loc[mask, 'TIME_AT_STATION'] = (df_all.loc[mask, 'TIMESTAMP'] - df_all.loc[mask, 'PREV_TIMESTAMP']).dt.total_seconds() * 1000
-        
-        # Remove first entry for each MSGID (no previous timestamp)
-        df_station_times = df_all[df_all['TIME_AT_STATION'].notna()]
-
-        # Calculate jitter - time between transactions at the same station
-        df_jitter = df_all.copy()
-        df_jitter = df_jitter.sort_values(['PINAME', 'TIMESTAMP'])
-        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('PINAME')['TIMESTAMP'].shift(-1)
-        
-        # Initialize JITTER column
-        df_jitter['JITTER'] = pd.NA
-        
-        # Handle the jitter calculation properly - check for NaN values and datetime types
-        mask_jitter = (df_jitter['NEXT_TIMESTAMP'].notna() & 
-                      pd.api.types.is_datetime64_any_dtype(df_jitter['TIMESTAMP']) &
-                      pd.api.types.is_datetime64_any_dtype(df_jitter['NEXT_TIMESTAMP']))
-        
-        if mask_jitter.any():
-            df_jitter.loc[mask_jitter, 'JITTER'] = (df_jitter.loc[mask_jitter, 'NEXT_TIMESTAMP'] - df_jitter.loc[mask_jitter, 'TIMESTAMP']).dt.total_seconds() * 1000
-        
-        # Remove last entry for each station (no next timestamp)
-        df_jitter = df_jitter[df_jitter['JITTER'].notna()]
-        
-        df_parcels_per_second = df_all.copy()
-        # Calculate parcels per second for each station - only if timestamps are valid
-        if pd.api.types.is_datetime64_any_dtype(df_parcels_per_second['TIMESTAMP']):
-            df_parcels_per_second['SECOND'] = df_parcels_per_second['TIMESTAMP'].dt.floor('S')
-            parcels_per_second = df_parcels_per_second.groupby(['PINAME', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')
+                elif df['TIMESTAMP'].dtype in ['int64', 'float64']:  # Numeric format
+                    df['TIMESTAMP'] = pd.to_datetime(df['TIMESTAMP'], unit='ns')
+                return df
             
-            # Get average parcels per second for each station
-            avg_parcels_per_second = parcels_per_second.groupby('PINAME')['PARCELS_PER_SECOND'].mean().reset_index()
-            avg_parcels_per_second.rename(columns={'PARCELS_PER_SECOND': 'AVG_PARCELS_PER_SECOND'}, inplace=True)
-        else:
-            # Create empty dataframe if timestamps aren't valid
-            avg_parcels_per_second = pd.DataFrame(columns=['PINAME', 'AVG_PARCELS_PER_SECOND'])
+            df_transactions = convert_timestamp(df_transactions)
+            df_graveyard = convert_timestamp(df_graveyard)
+            
+            # Remove rows with invalid timestamps
+            df_transactions = df_transactions.dropna(subset=['TIMESTAMP'])
+            df_graveyard = df_graveyard.dropna(subset=['TIMESTAMP'])
+            
+            if df_transactions.empty or df_graveyard.empty:
+                print(f"Skipping {identifier} - no valid timestamps")
+                continue
+            
+            print(f"Processing {len(df_transactions)} transactions and {len(df_graveyard)} graveyard entries")
+              
+            # Identify missing parcel IDs
+            transaction_ids = set(df_transactions['MSGID'])
+            graveyard_ids = set(df_graveyard['MSGID'])
+            missing_ids = transaction_ids - graveyard_ids
+            
+            # Create simplified combined analysis
+            df_combined_simple = pd.DataFrame()
+            
+            # Basic statistics
+            total_transactions = len(df_transactions)
+            total_graveyard = len(df_graveyard)
+            missing_count = len(missing_ids)
+            
+            # Time range
+            start_time = min(df_transactions['TIMESTAMP'].min(), df_graveyard['TIMESTAMP'].min())
+            end_time = max(df_transactions['TIMESTAMP'].max(), df_graveyard['TIMESTAMP'].max())
+            duration_seconds = (end_time - start_time).total_seconds()
+            
+            # Calculate basic metrics only
+            df_all = pd.concat([df_transactions, df_graveyard], ignore_index=True)
+            df_all = df_all.sort_values(['MSGID', 'TIMESTAMP'])
+            
+            # Calculate simple bounce times for a sample of messages (to avoid memory issues)
+            sample_size = min(1000, len(df_all))
+            df_sample = df_all.head(sample_size).copy()
+            df_sample['PREV_TIMESTAMP'] = df_sample.groupby('MSGID')['TIMESTAMP'].shift(1)
+            
+            # Calculate time differences
+            mask = df_sample['PREV_TIMESTAMP'].notna()
+            df_sample.loc[mask, 'TIME_AT_STATION'] = (
+                df_sample.loc[mask, 'TIMESTAMP'] - df_sample.loc[mask, 'PREV_TIMESTAMP']
+            ).dt.total_seconds() * 1000
+            
+            avg_bounce_time = df_sample['TIME_AT_STATION'].mean() if not df_sample['TIME_AT_STATION'].isna().all() else 0
+            
+            # Create summary report
+            summary = {
+                'identifier': identifier,
+                'total_transactions': total_transactions,
+                'total_graveyard': total_graveyard,
+                'missing_parcels': missing_count,
+                'loss_rate': missing_count / total_transactions if total_transactions > 0 else 0,
+                'start_time': start_time,
+                'end_time': end_time,
+                'duration_seconds': duration_seconds,
+                'avg_bounce_time_ms': avg_bounce_time,
+                'throughput_per_second': total_transactions / duration_seconds if duration_seconds > 0 else 0
+            }
+            
+            # Save summary instead of full analysis
+            summary_df = pd.DataFrame([summary])
+            summary_df.to_csv(f"/var/lib/Logsforgrafana/summary_{identifier}.csv", index=False)
+            
+            print(f"Completed {identifier}: {total_transactions} transactions, {missing_count} missing ({missing_count/total_transactions*100:.1f}% loss)")
+            
+            # Force garbage collection
+            del df_transactions, df_graveyard, df_all, df_sample
+            gc.collect()
+            
+        except Exception as e:
+            print(f"Error processing {identifier}: {e}")
+            continue
+    else:
+        print(f"Missing files for {identifier}")
 
-        df_parcel_lifetime = df_all.copy()
-        # Calculate lifetime of each parcel
-        if pd.api.types.is_datetime64_any_dtype(df_parcel_lifetime['TIMESTAMP']):
-            df_parcel_lifetime['LIFETIME'] = (df_parcel_lifetime.groupby('MSGID')['TIMESTAMP'].transform('max') - df_parcel_lifetime.groupby('MSGID')['TIMESTAMP'].transform('min')).dt.total_seconds() * 1000
-        else:
-            df_parcel_lifetime['LIFETIME'] = 0  # Default value if timestamps aren't datetime
-        df_parcel_lifetime = df_parcel_lifetime[['MSGID', 'LIFETIME']].drop_duplicates()
-        
-        # Calculate parcels lost per second
-        parcels_lost_per_second = df_lost_over_time.copy()
-        if pd.api.types.is_datetime64_any_dtype(parcels_lost_per_second['TIMESTAMP']):
-            parcels_lost_per_second['SECOND'] = parcels_lost_per_second['TIMESTAMP'].dt.floor('S')
-            parcels_lost_per_second = parcels_lost_per_second.groupby(['IN_GRAVEYARD', 'SECOND']).agg({'LOST_COUNT': 'max'}).reset_index()
-            parcels_lost_per_second.rename(columns={'LOST_COUNT': 'PARCELS_LOST_PER_SECOND'}, inplace=True)
-        else:
-            # Create empty dataframe if timestamps aren't valid
-            parcels_lost_per_second = pd.DataFrame(columns=['IN_GRAVEYARD', 'SECOND', 'PARCELS_LOST_PER_SECOND'])
-        
-        # Merge additional system metrics by MSGID and TIMESTAMP
-        system_metrics = ['CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB']
-        # Only include metrics that exist in the dataframe
-        available_metrics = [col for col in system_metrics if col in df_all.columns]
-        df_system_metrics = df_all[['MSGID', 'TIMESTAMP', 'PINAME'] + available_metrics].drop_duplicates()
-
-        # Merge all data together - Fixed column references
-        df_combined = df_parcel_status.merge(df_lost_over_time[['MSGID', 'LOST_COUNT']], on='MSGID', how='left')
-        
-        if not df_station_times.empty:
-            df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
-        
-        if not df_jitter.empty and 'PINAME' in df_combined.columns:
-            df_combined = df_combined.merge(df_jitter[['PINAME', 'JITTER']], on='PINAME', how='left')
-        
-        if not avg_parcels_per_second.empty and 'PINAME' in df_combined.columns:
-            df_combined = df_combined.merge(avg_parcels_per_second, on='PINAME', how='left')
-        
-        df_combined = df_combined.merge(df_parcel_lifetime, on='MSGID', how='left')
-        
-        if not parcels_lost_per_second.empty:
-            df_combined = df_combined.merge(parcels_lost_per_second, on=['IN_GRAVEYARD'], how='left')
-        
-        df_combined = df_combined.merge(df_system_metrics, on=['MSGID', 'TIMESTAMP'], how='left')
-        df_combined.to_csv(f"/var/lib/Logsforgrafana/combined_analysis_{identifier}.csv", index=False)
+print("Creating filenames list...")
 
 # Get all filenames in the directory and save to filenames.csv
 output_dir = "/var/lib/Logsforgrafana/"
-all_files = [f for f in os.listdir(output_dir) if f != "filenames.csv"]
+try:
+    all_files = [f for f in os.listdir(output_dir) if f != "filenames.csv"]
+    
+    # Create DataFrame with filenames
+    df_filenames = pd.DataFrame(all_files, columns=['filenames'])
+    
+    # Save to filenames.csv
+    df_filenames.to_csv(os.path.join(output_dir, "filenames.csv"), index=False)
+    print(f"Created filenames.csv with {len(all_files)} files")
+except Exception as e:
+    print(f"Error creating filenames.csv: {e}")
 
-# Create DataFrame with filenames
-df_filenames = pd.DataFrame(all_files, columns=['filenames'])
-
-# Save to filenames.csv
-df_filenames.to_csv(os.path.join(output_dir, "filenames.csv"), index=False)
+print("Processing complete!")
 
