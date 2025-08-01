@@ -80,8 +80,8 @@ class Station(Node):
    
     def _on_kill_signal(self, kill_signal):
         time_diff = int(dt.datetime.now().timestamp()) - kill_signal.timestamp
-        if kill_signal.kill_msg == f'All other stations with this name ({self.this_station}) must die!':
-            return  # Ignore our own kill signal
+        self.get_logger().info(f"Received kill signal: {kill_signal.kill_msg} at {kill_signal.timestamp}")
+        self.get_logger().info(f"Time since kill signal: {time_diff} seconds")
         if time_diff < 5:  # Only process recent kill signals (within 5 seconds)
             self.get_logger().info(f"Kill Message: {kill_signal.kill_msg}")
             raise SystemExit
