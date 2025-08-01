@@ -62,14 +62,15 @@ launch_station_tmux_local() {
   remote_cmd+=" && source \"${ws_path}/src/post/post_scripts/${dds_config}\" \"${ws_path}\""
   remote_cmd+=" && set +u"
   remote_cmd+=" && source \"${ws_path}/install/setup.bash\""
-  #remote_cmd+=" && pkill -f post_core"
+  remote_cmd+=" && pkill -f station"
   remote_cmd+=" && sleep 2"
   remote_cmd+=" && ros2 run post_core station"
   remote_cmd+=" --name ${node_name}"
   remote_cmd+=" --type ${node_type}"
   remote_cmd+=" --lossmode ${qos_profile}"
   remote_cmd+=" --depth ${qos_depth}"
-
+  echo "Launching on ${ip} as ${user} with command:"
+  echo "$remote_cmd"
   tmux send-keys -t "${session_name}:${window_name}" \
     "ssh -o StrictHostKeyChecking=no ${user}@${ip} bash -c '$remote_cmd'" C-m
 }
