@@ -1,2 +1,2 @@
 string kill_msg
-int timestamp
+int64 timestamp
