@@ -14,8 +14,16 @@ for identifier in identifiers:
     
     # Check if both files exist
     if os.path.exists(log_file) and os.path.exists(graveyard_file):
-        df_transactions = pd.read_csv(log_file)
-        df_graveyard = pd.read_csv(graveyard_file)
+        # Define column names based on your log format
+        log_columns = [
+            'TIMESTAMP', 'CURRENT_STATION', 'MSGID', 'OWNER', 
+            'PREV_LOCATION', 'NEXT_LOCATION', 'INSTRUCTION_SET',
+            'CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 
+            'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB', 'TTL'
+        ]
+        
+        df_transactions = pd.read_csv(log_file, names=log_columns)
+        df_graveyard = pd.read_csv(graveyard_file, names=log_columns)
         
         # Convert nanoseconds if needed
         if df_transactions['TIMESTAMP'].dtype == 'int64':
@@ -69,7 +77,7 @@ for identifier in identifiers:
         df_all = pd.concat([df_transactions, df_graveyard], ignore_index=True)
         df_all = df_all.sort_values(['MSGID', 'TIMESTAMP'])
         
-        # Fix: Remove the line break in df_all
+        # Calculate time differences between consecutive timestamps for each MSGID
         df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
         
         # Handle the timedelta calculation properly
@@ -82,12 +90,12 @@ for identifier in identifiers:
 
         # Calculate jitter - time between transactions at the same station
         df_jitter = df_all.copy()
-        df_jitter = df_jitter.sort_values(['STATION', 'TIMESTAMP'])
-        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('STATION')['TIMESTAMP'].shift(-1)
+        df_jitter = df_jitter.sort_values(['CURRENT_STATION', 'TIMESTAMP'])  # Fixed: use CURRENT_STATION
+        df_jitter['NEXT_TIMESTAMP'] = df_jitter.groupby('CURRENT_STATION')['TIMESTAMP'].shift(-1)  # Fixed: use CURRENT_STATION
         
-        # Fix: Handle the jitter calculation properly
-        jitter_diff = df_jitter['NEXT_TIMESTAMP'] - df_jitter['TIMESTAMP']
-        df_jitter['JITTER'] = jitter_diff.dt.total_seconds() * 1000
+        # Handle the jitter calculation properly - check for NaN values
+        mask_jitter = df_jitter['NEXT_TIMESTAMP'].notna()
+        df_jitter.loc[mask_jitter, 'JITTER'] = (df_jitter.loc[mask_jitter, 'NEXT_TIMESTAMP'] - df_jitter.loc[mask_jitter, 'TIMESTAMP']).dt.total_seconds() * 1000
         
         # Remove last entry for each station (no next timestamp)
         df_jitter = df_jitter[df_jitter['JITTER'].notna()]
@@ -95,10 +103,10 @@ for identifier in identifiers:
         df_parcels_per_second = df_all.copy()
         # Calculate parcels per second for each station
         df_parcels_per_second['SECOND'] = df_parcels_per_second['TIMESTAMP'].dt.floor('S')
-        parcels_per_second = df_parcels_per_second.groupby(['STATION', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')
+        parcels_per_second = df_parcels_per_second.groupby(['CURRENT_STATION', 'SECOND']).size().reset_index(name='PARCELS_PER_SECOND')  # Fixed: use CURRENT_STATION
         
         # Get average parcels per second for each station
-        avg_parcels_per_second = parcels_per_second.groupby('STATION')['PARCELS_PER_SECOND'].mean().reset_index()
+        avg_parcels_per_second = parcels_per_second.groupby('CURRENT_STATION')['PARCELS_PER_SECOND'].mean().reset_index()  # Fixed: use CURRENT_STATION
         avg_parcels_per_second.rename(columns={'PARCELS_PER_SECOND': 'AVG_PARCELS_PER_SECOND'}, inplace=True)
 
         df_parcel_lifetime = df_all.copy()
@@ -114,13 +122,13 @@ for identifier in identifiers:
         
         # Merge additional system metrics by MSGID and TIMESTAMP
         system_metrics = ['CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB']
-        df_system_metrics = df_all[['MSGID', 'TIMESTAMP'] + system_metrics].drop_duplicates()
+        df_system_metrics = df_all[['MSGID', 'TIMESTAMP', 'CURRENT_STATION'] + system_metrics].drop_duplicates()
 
-        # Merge all data together
+        # Merge all data together - Fixed column references
         df_combined = df_parcel_status.merge(df_lost_over_time[['MSGID', 'LOST_COUNT']], on='MSGID', how='left')
         df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
-        df_combined = df_combined.merge(df_jitter[['STATION', 'JITTER']], on='STATION', how='left')
-        df_combined = df_combined.merge(avg_parcels_per_second, on='STATION', how='left')
+        df_combined = df_combined.merge(df_jitter[['CURRENT_STATION', 'JITTER']], on='CURRENT_STATION', how='left')  # Fixed: use CURRENT_STATION
+        df_combined = df_combined.merge(avg_parcels_per_second, on='CURRENT_STATION', how='left')  # Fixed: use CURRENT_STATION
         df_combined = df_combined.merge(df_parcel_lifetime, on='MSGID', how='left')
         df_combined = df_combined.merge(parcels_lost_per_second, on=['IN_GRAVEYARD', 'SECOND'], how='left')
         df_combined = df_combined.merge(df_system_metrics, on=['MSGID', 'TIMESTAMP'], how='left')
