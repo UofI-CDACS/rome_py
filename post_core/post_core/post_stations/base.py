@@ -11,9 +11,10 @@ class Station(Node):
         super().__init__(f'{name}' or 'station_base')
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
-        self._pub_lock = threading.Lock()  # Fixed: changed from _lock to _pub_lock
+        self._pub_lock = threading.Lock()
         self.loss_mode = loss_mode
         self.depth = depth
+        
         if loss_mode == 'lossless':
             self.qos_profile = QoSProfile(
                 reliability=ReliabilityPolicy.RELIABLE,
@@ -29,28 +30,31 @@ class Station(Node):
                 history=HistoryPolicy.KEEP_LAST
             )
         
-        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
-        kill_signal = StationKill()
-        kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
-        kill_signal.timestamp = int(dt.datetime.now().timestamp())
-        kill_signal_pub.publish(kill_signal)
-        
-        self.subscription = self.create_subscription(
+        # Create parcel subscription
+        self.parcel_subscription = self.create_subscription(
             Parcel,
             f'{self.this_station}/parcels',
             self._on_parcel_received,
             self.qos_profile
         )
 
-        self.subscription = self.create_subscription(
+        # Create kill signal subscription with separate variable name
+        self.kill_subscription = self.create_subscription(
             StationKill,
             f'{self.this_station}/kill',
             self._on_kill_signal,
             self.qos_profile
         )
 
-        self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
+        self.get_logger().info(f'Station "{self.this_station}" started with {loss_mode} mode, listening for parcels.')
 
+        # Publish kill signal AFTER subscriptions are set up
+        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
+        kill_signal = StationKill()
+        kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
+        kill_signal.timestamp = int(dt.datetime.now().timestamp())
+        kill_signal_pub.publish(kill_signal)
+        
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
         # Include QoS in the cache key
         qos_key = f"{topic_name}_{qos_profile.reliability}_{qos_profile.durability}_{qos_profile.depth}"
@@ -75,7 +79,8 @@ class Station(Node):
             asyncio.ensure_future(self.parcel_callback(parcel))
    
     def _on_kill_signal(self, kill_signal):
-        if (int(dt.datetime.now().timestamp()) - kill_signal.timestamp ) > 5000:
+        time_diff = int(dt.datetime.now().timestamp()) - kill_signal.timestamp
+        if time_diff < 5:  # Only process recent kill signals (within 5 seconds)
             self.get_logger().info(f"Kill Message: {kill_signal.kill_msg}")
             raise SystemExit
 
