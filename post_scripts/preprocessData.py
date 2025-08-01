@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import glob
-import datetime as dt
+
 # Get all log files and their identifiers
 log_files = glob.glob("/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-*.csv")
 identifiers = [os.path.basename(f).replace("log-", "").replace(".csv", "") for f in log_files]
@@ -22,14 +22,6 @@ for identifier in identifiers:
         if df_graveyard['TIMESTAMP'].dtype == 'int64':
             df_graveyard['TIMESTAMP'] = pd.to_datetime(df_graveyard['TIMESTAMP'], unit='ns')
           
-        # Calculate data volume per second
-        df_all_messages = pd.concat([df_transactions, df_graveyard], ignore_index=True)
-        df_all_messages = df_all_messages.sort_values('TIMESTAMP')
-
-        # Group by second and count messages
-        df_all_messages['TIMESTAMP_SECOND'] = pd.to_timedelta(df_all_messages['TIMESTAMP'].astype('int64'), unit='ns').dt.total_seconds()
-        df_volume_per_second = df_all_messages.groupby('TIMESTAMP_SECOND').size().reset_index(name='MESSAGES_PER_SECOND')
-        
         # Identify missing parcel IDs
         transaction_ids = set(df_transactions['MSGID'])
         graveyard_ids = set(df_graveyard['MSGID'])
@@ -74,7 +66,7 @@ for identifier in identifiers:
 
         # Calculate time differences between consecutive timestamps for each MSGID
         df_all['PREV_TIMESTAMP'] = df_all.groupby('MSGID')['TIMESTAMP'].shift(1)
-        df_all['TIME_AT_STATION'] = (df_all['TIMESTAMP'] - df_all['PREV_TIMESTAMP']) * 1000
+        df_all['TIME_AT_STATION'] = (df_all['TIMESTAMP'] - df_all['PREV_TIMESTAMP']).dt.total_seconds() * 1000
 
         # Remove first entry for each MSGID (no previous timestamp)
         df_station_times = df_all[df_all['TIME_AT_STATION'].notna()]
@@ -82,22 +74,11 @@ for identifier in identifiers:
         # Merge all data together
         df_combined = df_parcel_status.merge(df_lost_over_time[['MSGID', 'LOST_COUNT']], on='MSGID', how='left')
         df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
-        
-        # Add timestamp second for merging with volume data
-        df_combined['TIMESTAMP_SECOND'] = pd.to_timedelta(df_combined['TIMESTAMP'].astype('int64'), unit='ns').dt.total_seconds()
 
-        # Merge with volume per second data
-        df_combined = df_combined.merge(df_volume_per_second, on='TIMESTAMP_SECOND', how='left')
-        
-        df_combined.to_csv(f"/var/lib/Logsforgrafana/combined_analysis_{identifier}.csv", index=False)
-
-    # Get all filenames in the directory and save to filenames.csv
-    output_dir = "/var/lib/Logsforgrafana/"
-    all_files = [f for f in os.listdir(output_dir) if f != "filenames.csv"]
-
+        # Save CSV file for this identifier
+        df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
     # Create DataFrame with filenames
-    df_filenames = pd.DataFrame(all_files, columns=['filenames'])
+    df_filenames = pd.DataFrame(log_files, columns=['filenames'])
 
     # Save to filenames.csv
-    df_filenames.to_csv(os.path.join(output_dir, "filenames.csv"), index=False)
-
+    df_filenames.to_csv(os.path.join("/var/lib/Logsforgrafana/", "filenames.csv"), index=False)
