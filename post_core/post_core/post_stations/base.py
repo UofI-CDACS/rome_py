@@ -5,6 +5,7 @@ from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 import threading
 import datetime as dt
+import time
 
 class Station(Node):
     def __init__(self, name=None, loss_mode='lossy', depth=10):
@@ -29,7 +30,15 @@ class Station(Node):
                 depth=depth,
                 history=HistoryPolicy.KEEP_LAST
             )
-        
+        self.get_logger().info(f'Station "{self.this_station}" started with {loss_mode} mode, listening for parcels.')
+        # Publish kill signal AFTER subscriptions are set up
+        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
+        kill_signal = StationKill()
+        kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
+        kill_signal.timestamp = int(dt.datetime.now().timestamp())
+        kill_signal_pub.publish(kill_signal)
+        # Wait for 5 seconds to allow other stations to process kill signal
+        time.sleep(5)
         # Create parcel subscription
         self.parcel_subscription = self.create_subscription(
             Parcel,
@@ -45,15 +54,6 @@ class Station(Node):
             self._on_kill_signal,
             self.qos_profile
         )
-
-        self.get_logger().info(f'Station "{self.this_station}" started with {loss_mode} mode, listening for parcels.')
-
-        # Publish kill signal AFTER subscriptions are set up
-        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
-        kill_signal = StationKill()
-        kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
-        kill_signal.timestamp = int(dt.datetime.now().timestamp())
-        kill_signal_pub.publish(kill_signal)
         
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
         # Include QoS in the cache key
