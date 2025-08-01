@@ -25,9 +25,9 @@ for identifier in identifiers:
         # Calculate data volume per second
         df_all_messages = pd.concat([df_transactions, df_graveyard], ignore_index=True)
         df_all_messages = df_all_messages.sort_values('TIMESTAMP')
-        
+
         # Group by second and count messages
-        df_all_messages['TIMESTAMP_SECOND'] = df_all_messages['TIMESTAMP'].dt.floor('S')
+        df_all_messages['TIMESTAMP_SECOND'] = pd.to_timedelta(df_all_messages['TIMESTAMP'].astype('int64'), unit='ns').dt.total_seconds()
         df_volume_per_second = df_all_messages.groupby('TIMESTAMP_SECOND').size().reset_index(name='MESSAGES_PER_SECOND')
         
         # Identify missing parcel IDs
