@@ -58,8 +58,6 @@ launch_station_tmux_local() {
   fi
 
   local remote_cmd="cd \"${ws_path}\""
-  remote_cmd+=" && (pkill -f ros2 || true)"
-  remote_cmd+=" && sleep 2"
   remote_cmd+=" && chmod -R +rwx ."
   remote_cmd+=" && source \"${ws_path}/src/post/post_scripts/${dds_config}\" \"${ws_path}\""
   remote_cmd+=" && set +u"
