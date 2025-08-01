@@ -84,8 +84,8 @@ for identifier in identifiers:
         df_combined = df_combined.merge(df_station_times[['MSGID', 'TIME_AT_STATION']], on='MSGID', how='left')
         
         # Add timestamp second for merging with volume data
-        df_combined['TIMESTAMP_SECOND'] = df_combined['TIMESTAMP'].dt.floor('S')
-        
+        df_combined['TIMESTAMP_SECOND'] = pd.to_timedelta(df_combined['TIMESTAMP'].astype('int64'), unit='ns').dt.total_seconds()
+
         # Merge with volume per second data
         df_combined = df_combined.merge(df_volume_per_second, on='TIMESTAMP_SECOND', how='left')
         
