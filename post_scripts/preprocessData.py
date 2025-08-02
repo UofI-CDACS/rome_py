@@ -80,7 +80,8 @@ for identifier in identifiers:
         # Save CSV file for this identifier
         df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
     # Create DataFrame with filenames
-    df_filenames = pd.DataFrame(log_files, columns=['filenames'])
+    all_files = [f for f in os.listdir("/var/lib/Logsforgrafana/") if f != "filenames.csv"]
+    df_filenames = pd.DataFrame(all_files, columns=['filenames'])
 
     # Save to filenames.csv
     df_filenames.to_csv(os.path.join("/var/lib/Logsforgrafana/", "filenames.csv"), index=False)
