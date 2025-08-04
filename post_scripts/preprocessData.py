@@ -69,7 +69,7 @@ for identifier in identifiers:
             else:
                 df_tas.at[_, 'TIME_AT_STATION'] = row['TIMESTAMP_MILLISECONDS'] - row['PREV_TIMESTAMP']
         #JITTER
-        df_jitter = df_tas[['MSGID','TIMESTAMP','TIMESTAMP_MILLISECONDS', 'PINAME']].copy()
+        df_jitter = df_transactions[['MSGID','TIMESTAMP','TIMESTAMP_MILLISECONDS', 'PINAME']].copy()
         df_jitter = df_jitter.sort_values(['PINAME', 'TIMESTAMP_MILLISECONDS'])
         df_jitter['PREV_TIMESTAMP'] = df_jitter.groupby('PINAME')['TIMESTAMP_MILLISECONDS'].shift(1)
         for _, row in df_jitter.iterrows():
