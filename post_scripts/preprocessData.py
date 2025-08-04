@@ -102,9 +102,9 @@ for identifier in identifiers:
         # Merge all data together
         # CPU/TEMP/MEMORY/NETWORK/USAGE USAGE
         df_combined = df_all[['MSGID','TIMESTAMP_SECONDS', 'TIMESTAMP', 'PINAME','CPU_PERCENT','CPU_TEMP','RAM_PERCENT','BYTES_SENT_MB','BYTES_RECV_MB']]
-        df_combined = df_combined.merge(df_lost_over_time[['MSGID', 'LOST_COUNT', 'COMPLETED_COUNT']], on='MSGID', how='left')
-        df_combined = df_combined.merge(df_tas[['MSGID', 'TIME_AT_STATION', 'TIMESTAMP']], on=['MSGID', 'TIMESTAMP'], how='left')
-        df_combined = df_combined.merge(df_jitter[['MSGID', 'JITTER', 'TIMESTAMP']], on=['MSGID', 'TIMESTAMP'], how='left')
+        df_combined = df_combined.merge(df_lost_over_time[['MSGID','TIMESTAMP','LOST_COUNT', 'COMPLETED_COUNT']], on=['TIMESTAMP','MSGID'], how='left')
+        df_combined = df_combined.merge(df_tas[['MSGID', 'TIME_AT_STATION', 'TIMESTAMP']], on=['TIMESTAMP', 'MSGID'], how='left')
+        df_combined = df_combined.merge(df_jitter[['MSGID', 'JITTER', 'TIMESTAMP']], on=['TIMESTAMP', 'MSGID'], how='left')
         df_combined = df_combined.merge(df_pps[['TIMESTAMP_SECONDS', 'PINAME', 'PARCELS_PER_SECOND']], on=['TIMESTAMP_SECONDS', 'PINAME'], how='left')
         df_combined = df_combined.drop('TIMESTAMP_SECONDS', axis=1)
         df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
