@@ -107,8 +107,7 @@ for identifier in identifiers:
         df_combined = df_combined.merge(df_jitter[['MSGID', 'JITTER', 'TIMESTAMP']], on=['MSGID', 'TIMESTAMP'], how='left')
         df_combined = df_combined.merge(df_pps[['TIMESTAMP_SECONDS', 'PINAME', 'PARCELS_PER_SECOND']], on=['TIMESTAMP_SECONDS', 'PINAME'], how='left')
         df_combined = df_combined.drop('TIMESTAMP_SECONDS', axis=1)
-        #df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
-        df_combined.to_csv(f"/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs/parcel_analysis_{identifier}.csv", index=False)
+        df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
     # Create DataFrame with filenames
     all_files = [f for f in os.listdir("/var/lib/Logsforgrafana/") if f != "filenames.csv"]
     df_filenames = pd.DataFrame(all_files, columns=['filenames'])
