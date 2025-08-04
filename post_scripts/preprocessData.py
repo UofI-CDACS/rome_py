@@ -3,16 +3,12 @@ import os
 import glob
 
 # Get all log files and their identifiers
-#log_files = glob.glob("/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-*.csv")
-#identifiers = [os.path.basename(f).replace("log-", "").replace(".csv", "") for f in log_files]
-log_files = glob.glob("/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs/log-*.csv")
+log_files = glob.glob("/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-*.csv")
 identifiers = [os.path.basename(f).replace("log-", "").replace(".csv", "") for f in log_files]
 # Process each identifier
 for identifier in identifiers:
-#    log_file = f"/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-{identifier}.csv"
-#    graveyard_file = f"/home/rospi/Desktop/test_ws/graveyard/graveyard-{identifier}.csv"
-    log_file = f"/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs/log-{identifier}.csv"
-    graveyard_file = f"/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs/graveyard-{identifier}.csv"
+    log_file = f"/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-{identifier}.csv"
+    graveyard_file = f"/home/rospi/Desktop/test_ws/graveyard/graveyard-{identifier}.csv"
     # Check if both files exist
     if os.path.exists(log_file) and os.path.exists(graveyard_file):
         df_transactions = pd.read_csv(log_file)
@@ -114,10 +110,8 @@ for identifier in identifiers:
         #df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
         df_combined.to_csv(f"/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs/parcel_analysis_{identifier}.csv", index=False)
     # Create DataFrame with filenames
-    #all_files = [f for f in os.listdir("/var/lib/Logsforgrafana/") if f != "filenames.csv"]
-    all_files = [f for f in os.listdir(f"/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs") if f != "filenames.csv"]
+    all_files = [f for f in os.listdir("/var/lib/Logsforgrafana/") if f != "filenames.csv"]
     df_filenames = pd.DataFrame(all_files, columns=['filenames'])
 
     # Save to filenames.csv
-    #df_filenames.to_csv(os.path.join("/var/lib/Logsforgrafana/", "filenames.csv"), index=False)
-    df_filenames.to_csv(os.path.join("/home/mbhabes/Documents/piProject/rome_py/post_scripts/logs", "filenames.csv"), index=False)
+    df_filenames.to_csv(os.path.join("/var/lib/Logsforgrafana/", "filenames.csv"), index=False)
