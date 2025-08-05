@@ -63,23 +63,14 @@ for identifier in identifiers:
         df_tas = df_all[['MSGID', 'TIMESTAMP_MILLISECONDS', 'TIMESTAMP', 'PINAME']].copy()
         df_tas = df_tas.sort_values(['MSGID', 'TIMESTAMP_MILLISECONDS'])
         df_tas['PREV_TIMESTAMP'] = df_tas.groupby('MSGID')['TIMESTAMP_MILLISECONDS'].shift(1)
-        for _, row in df_tas.iterrows():
-            if pd.isna(row['PREV_TIMESTAMP']):
-                df_tas.at[_, 'TIME_AT_STATION'] = 0
-            else:
-                df_tas.at[_, 'TIME_AT_STATION'] = row['TIMESTAMP_MILLISECONDS'] - row['PREV_TIMESTAMP']
+        df_tas['TIME_AT_STATION'] = df_tas['TIMESTAMP_MILLISECONDS'] - df_tas['PREV_TIMESTAMP']
+        df_tas['TIME_AT_STATION'] = df_tas['TIME_AT_STATION'].fillna(0)
         #JITTER
         df_jitter = df_transactions[['MSGID','TIMESTAMP','TIMESTAMP_MILLISECONDS', 'PINAME']].copy()
         df_jitter = df_jitter.sort_values(['PINAME', 'TIMESTAMP_MILLISECONDS'])
         df_jitter['PREV_TIMESTAMP'] = df_jitter.groupby('PINAME')['TIMESTAMP_MILLISECONDS'].shift(1)
-        for _, row in df_jitter.iterrows():
-            if pd.isna(row['PREV_TIMESTAMP']):
-                df_jitter.at[_, 'JITTER'] = 0
-            else:
-                df_jitter.at[_, 'JITTER'] = row['TIMESTAMP_MILLISECONDS'] - row['PREV_TIMESTAMP']
-
-
-        # PARCELS PER SECOND
+        df_jitter['JITTER'] = df_jitter['TIMESTAMP_MILLISECONDS'] - df_jitter['PREV_TIMESTAMP']
+        df_jitter['JITTER'] = df_jitter['JITTER'].fillna(0)
         df_pps = df_all[['MSGID','TIMESTAMP_SECONDS', 'TIMESTAMP', 'PINAME']].copy()
         df_rate = (
             df_pps
