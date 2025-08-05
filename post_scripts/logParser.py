@@ -13,7 +13,6 @@ DATA_PATTERN = re.compile(r'(\w+)=([^;]+)')
 metrics = ['TIMESTAMP', 'PINAME', 'MSGID', 'OWNER', 'PREVLOC', 'NEXTLOC', 'INSTRUCTION_SET', 'CPU_PERCENT', 'CPU_TEMP', 'RAM_PERCENT', 'BYTES_SENT_MB', 'BYTES_RECV_MB', 'PARCEL_SIZE_MB']
 ip_list = [
     '172.23.254.18',
-    '172.23.254.20',
     '172.23.254.22',
     '172.23.254.23',
     '172.23.254.24'
