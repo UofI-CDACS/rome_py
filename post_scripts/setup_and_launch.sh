@@ -3,10 +3,10 @@ set -euo pipefail
 
 # Source common function libraries
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/common.sh"
-source "${SCRIPT_DIR}/common_git.sh"
-source "${SCRIPT_DIR}/common_ssh.sh"
-source "${SCRIPT_DIR}/common_build.sh"
+source "${SCRIPT_DIR}common/common.sh"
+source "${SCRIPT_DIR}common/common_git.sh"
+source "${SCRIPT_DIR}common/common_ssh.sh"
+source "${SCRIPT_DIR}common/common_build.sh"
 
 # === Configurable Mappings ===
 declare -A PI_USERS=(
@@ -59,7 +59,7 @@ launch_station_tmux_local() {
 
   local remote_cmd="cd \"${ws_path}\""
   remote_cmd+=" && chmod -R +rwx ."
-  remote_cmd+=" && source \"${ws_path}/src/post/post_scripts/${dds_config}\" \"${ws_path}\""
+  remote_cmd+=" && source \"${ws_path}/src/post/post_scripts/dds/${dds_config}\" \"${ws_path}\""
   remote_cmd+=" && set +u"
   remote_cmd+=" && source \"${ws_path}/install/setup.bash\""
   remote_cmd+=" && ros2 run post_core station"
@@ -78,7 +78,7 @@ DEFAULT_WORKSPACE="${HOME}/Desktop/test_ws"
 if [[ -d "${DEFAULT_WORKSPACE}/src/post" ]]; then
   cd "${DEFAULT_WORKSPACE}/src/post"
   DEFAULT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-  cd - > /dev/null
+  cd - >/dev/null
 else
   DEFAULT_BRANCH="main"
 fi
