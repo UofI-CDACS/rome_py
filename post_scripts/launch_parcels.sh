@@ -100,7 +100,6 @@ ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_M
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \
     -p mode:="$MODE" \
-    -p loss_mode:="$LOSS_MODE" \
     -p interval_sec:=$INTERVAL_SEC \
     -p owner_id:="$OWNER" \
     -p instruction_set:="$INSTRUCTION_SET" \
@@ -112,11 +111,10 @@ if [ "$PARSE_LOGS" = true ]; then
 fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
-    ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
+    ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
         -p destinations:="$NEXT_LOCATION" \
         -p count:=$PARCEL_COUNT \
         -p mode:="$MODE" \
-        -p loss_mode:="$LOSS_MODE" \
         -p interval_sec:=$INTERVAL_SEC \
         -p owner_id:="$OWNER" \
         -p instruction_set:="$INSTRUCTION_SET" \

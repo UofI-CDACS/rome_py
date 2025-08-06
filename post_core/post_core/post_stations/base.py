@@ -1,18 +1,21 @@
 import asyncio
 import rclpy
 from rclpy.node import Node
-from post_interfaces.msg import Parcel
+from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 import threading
+import datetime as dt
+import time
 
 class Station(Node):
     def __init__(self, name=None, loss_mode='lossy', depth=10):
         super().__init__(f'{name}' or 'station_base')
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
-        self._pub_lock = threading.Lock()  # Fixed: changed from _lock to _pub_lock
+        self._pub_lock = threading.Lock()
         self.loss_mode = loss_mode
         self.depth = depth
+        
         if loss_mode == 'lossless':
             self.qos_profile = QoSProfile(
                 reliability=ReliabilityPolicy.RELIABLE,
@@ -27,14 +30,31 @@ class Station(Node):
                 depth=depth,
                 history=HistoryPolicy.KEEP_LAST
             )
-        self.subscription = self.create_subscription(
+        self.get_logger().info(f'Station "{self.this_station}" started with {loss_mode} mode, listening for parcels.')
+        # Publish kill signal AFTER subscriptions are set up
+        kill_signal_pub = self.create_publisher(StationKill, f'{self.this_station}/kill', self.qos_profile)
+        kill_signal = StationKill()
+        kill_signal.kill_msg = f'All other stations with this name ({self.this_station}) must die!'
+        kill_signal.timestamp = int(dt.datetime.now().timestamp())
+        kill_signal_pub.publish(kill_signal)
+        # Wait for 5 seconds to allow other stations to process kill signal
+        time.sleep(5)
+        # Create parcel subscription
+        self.parcel_subscription = self.create_subscription(
             Parcel,
             f'{self.this_station}/parcels',
             self._on_parcel_received,
             self.qos_profile
         )
-        self.get_logger().info(f'Station "{self.this_station}" started, listening for parcels.')
 
+        # Create kill signal subscription with separate variable name
+        self.kill_subscription = self.create_subscription(
+            StationKill,
+            f'{self.this_station}/kill',
+            self._on_kill_signal,
+            self.qos_profile
+        )
+        
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
         # Include QoS in the cache key
         qos_key = f"{topic_name}_{qos_profile.reliability}_{qos_profile.durability}_{qos_profile.depth}"
@@ -44,23 +64,9 @@ class Station(Node):
                 self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
             return self._pub_cache[qos_key]
 
-    def send_parcel(self, parcel, next_location: str, lossmode: str = 'lossy'):
-        if lossmode == 'lossless':
-            qos_profile = QoSProfile(
-                reliability=ReliabilityPolicy.RELIABLE,
-                durability=DurabilityPolicy.TRANSIENT_LOCAL,
-                depth=1000,
-                history=HistoryPolicy.KEEP_ALL 
-            )
-        else:
-            qos_profile = QoSProfile(
-                reliability=ReliabilityPolicy.BEST_EFFORT,
-                durability=DurabilityPolicy.VOLATILE,
-                depth=10,
-                history=HistoryPolicy.KEEP_LAST
-            )
+    def send_parcel(self, parcel, next_location: str):
         topic = f'{next_location}/parcels'
-        publisher = self.get_publisher(topic, qos_profile)
+        publisher = self.get_publisher(topic, self.qos_profile)
         publisher.publish(parcel)
 
     def _on_parcel_received(self, parcel):
@@ -71,7 +77,15 @@ class Station(Node):
         except RuntimeError:
             # No event loop running, create one
             asyncio.ensure_future(self.parcel_callback(parcel))
-    
+   
+    def _on_kill_signal(self, kill_signal):
+        time_diff = int(dt.datetime.now().timestamp()) - kill_signal.timestamp
+        self.get_logger().info(f"Received kill signal: {kill_signal.kill_msg} at {kill_signal.timestamp}")
+        self.get_logger().info(f"Time since kill signal: {time_diff} seconds")
+        if time_diff < 5:  # Only process recent kill signals (within 5 seconds)
+            self.get_logger().info(f"Kill Message: {kill_signal.kill_msg}")
+            raise SystemExit
+
     async def parcel_callback(self, parcel: Parcel):
         # To be overridden by subclasses
         self.get_logger().warn(f"Received parcel {parcel.parcel_id} but no handler implemented.")
