@@ -29,20 +29,20 @@ class DefaultStation(Station):
 
             if result.signal == InstructionSignal.GRAVEYARD:
                 self.get_logger().warn(f"Parcel {parcel.parcel_id} killed. Sending to graveyard: {graveyard}.")
-                self.send_parcel(parcel, graveyard, lossmode=parcel.loss_mode)
+                self.send_parcel(parcel, graveyard)
             elif result.signal == InstructionSignal.RETRY:
                 self.get_logger().warn(f"Parcel {parcel.parcel_id} retry requested. Retry not implemented.")
             elif result.signal == InstructionSignal.ERROR:
                 self.get_logger().error(f"Parcel {parcel.parcel_id} error signal received. Notes: {result.notes}")
-                self.send_parcel(parcel, graveyard, lossmode=parcel.loss_mode)
+                self.send_parcel(parcel, graveyard)
             else:
                 if result.next_destination:
                     self.get_logger().info(f"Parcel {parcel.parcel_id} forwarding to {result.next_destination}")
-                    self.send_parcel(parcel, result.next_destination, lossmode=parcel.loss_mode)
+                    self.send_parcel(parcel, result.next_destination)
                 else:
                     self.get_logger().info(f"Parcel {parcel.parcel_id} processed successfully.")
 
         except Exception as e:
             self.get_logger().error(f"Instruction set error: {e}")
             self.get_logger().warn(f"Parcel {parcel.parcel_id} killed due to exception.")
-            self.send_parcel(parcel, graveyard, lossmode=parcel.loss_mode)
+            self.send_parcel(parcel, graveyard)

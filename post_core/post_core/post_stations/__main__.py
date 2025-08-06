@@ -29,6 +29,8 @@ def main():
             while rclpy.ok():
                 rclpy.spin_once(node, timeout_sec=float(args.timeout))
                 await asyncio.sleep(0.001)  # Small delay for async tasks
+        except SystemExit:
+            rclpy.logging.get_logger("Quitting").info('Done')
         finally:
             node.destroy_node()
             rclpy.shutdown()

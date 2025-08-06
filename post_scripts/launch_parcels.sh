@@ -6,7 +6,7 @@ STATION_NAME="${STATION_NAME:-owner_station}"
 MODE="${MODE:-round_robin}"
 INTERVAL_MS="${INTERVAL_MS:-100}"
 TTL_VALUE="${TTL_VALUE:-10}"
-DDS_CONFIG="${DDS_CONFIG:-cyclone_source.sh}"
+DDS_CONFIG="${DDS_CONFIG:-cyclonedds_source.sh}"
 PARCEL_COUNT="${PARCEL_COUNT:-100}"
 OWNER="${OWNER:-Owner}"
 INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
@@ -19,7 +19,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
     --field="Mode":CB "round_robin!random!once" \
-    --field="DDS Config":CB "cyclone_source.sh!fast_source.sh"\
+    --field="DDS Config":CB "cyclonedds_source.sh!fastrtps_source.sh" \
     --field="Interval (ms)":NUM "$INTERVAL_MS" \
     --field="TTL Value":NUM "$TTL_VALUE" \
     --field="Parcel Count":NUM "$PARCEL_COUNT" \
@@ -70,7 +70,7 @@ if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
     IFS=',' read -ra PARAMS <<< "$PARAMS"
     echo "PARAMS: ${PARAMS[@]}"
 else
-    CUSTOM_PARAMS=""
+    PARAMS=""
 fi
 yad --question --title="Parse Logs" --text="Do you want to parse the logs?" --button=Yes:0 --button=No:1
 if [ $? -eq 0 ]; then
@@ -80,28 +80,26 @@ else
 fi
 
 cd $WORKSPACE_FOLDER
-source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG"
 source "$WORKSPACE_FOLDER/install/setup.bash"
+source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" "$WORKSPACE_FOLDER"
 
 if [ -n "$PARAMS" ]; then
     PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s .)
 else
     PARAMS_JSON="{}"
 fi
-
 if [ -n "$PARAMS" ]; then
-    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + [{"key": "ttl", "val": "'$TTL_VALUE'"}]')
+    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ['ttl:"$TTL_VALUE"']')
 else
-PARAMS_JSON="['ttl:"$TTL_VALUE"']"
+    PARAMS_JSON="['ttl:"$TTL_VALUE"']"
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
-gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
+#gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
 sleep 3
 ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \
     -p mode:="$MODE" \
-    -p loss_mode:="$LOSS_MODE" \
     -p interval_sec:=$INTERVAL_SEC \
     -p owner_id:="$OWNER" \
     -p instruction_set:="$INSTRUCTION_SET" \
@@ -113,11 +111,10 @@ if [ "$PARSE_LOGS" = true ]; then
 fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
-    ros2 run post_core station --type sender --name $STATION_NAME --ros-args \
+    ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
         -p destinations:="$NEXT_LOCATION" \
         -p count:=$PARCEL_COUNT \
         -p mode:="$MODE" \
-        -p loss_mode:="$LOSS_MODE" \
         -p interval_sec:=$INTERVAL_SEC \
         -p owner_id:="$OWNER" \
         -p instruction_set:="$INSTRUCTION_SET" \
