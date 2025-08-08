@@ -95,7 +95,7 @@ else
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 #gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
-sleep 3
+#sleep 3
 ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \
@@ -105,8 +105,22 @@ ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_M
     -p instruction_set:="$INSTRUCTION_SET" \
     -p data:="$PARAMS_JSON"
 
-sleep 10
+sleep 5
 if [ "$PARSE_LOGS" = true ]; then
+    HOSTNAME=$(hostname)
+    graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
+    prev_graveyard_linecount=0
+    while true; do
+        graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
+        if [ "$graveyard_linecount" -gt "$prev_graveyard_linecount" ]; then
+            sleep 1
+            prev_graveyard_linecount=$graveyard_linecount
+            echo "Waiting for logs to be written..."
+        else
+            break
+        fi
+    done
+    echo "Parsing logs..."
     python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
 fi
 
