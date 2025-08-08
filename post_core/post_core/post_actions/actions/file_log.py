@@ -5,6 +5,12 @@ import sys
 from ..registry import register_action
 from rclpy.node import Node
 import psutil
+import pymongo
+
+database = pymongo.MongoClient("mongodb://172.23.254.20:27017/")
+collection = database['logs']['logs']
+
+
 @register_action('file_log_parcel')
 async def file_log_parcel(station: Node, parcel, log_path: str):
     if not isinstance(station, Node):
@@ -47,13 +53,31 @@ async def file_log_parcel(station: Node, parcel, log_path: str):
     bytes_sent_mb = net_io.bytes_sent / (1024 * 1024)
     bytes_recv_mb = net_io.bytes_recv / (1024 * 1024)
     parcel_size_mb = sys.getsizeof(parcel) / (1024 * 1024)
-    line = (
-        f"{log_time},{qual_name},{parcel_id},{owner_id},{prev_location},"
-        f"{next_location},{instruction_set},{cpu_percent},"
-        f"{cpu_temp},{ram_percent},{bytes_sent_mb},{bytes_recv_mb},{parcel_size_mb},{data_str}\n"
-    )
-    try:
-        with open(filepath, 'a', encoding='utf-8') as f:
-            f.write(line)
-    except Exception as e:
-        raise ValueError(f'Failed to write log file "{filepath}": {e}')
+    data = {
+        'log_time': log_time,
+        'qual_name': qual_name,
+        'parcel_id': parcel_id,
+        'owner_id': owner_id,
+        'prev_location': prev_location,
+        'next_location': next_location,
+        'instruction_set': instruction_set,
+        'cpu_percent': cpu_percent,
+        'cpu_temp': cpu_temp,
+        'ram_percent': ram_percent,
+        'bytes_sent_mb': bytes_sent_mb,
+        'bytes_recv_mb': bytes_recv_mb,
+        'parcel_size_mb': parcel_size_mb
+    }
+
+    collection.insert_one(data)
+
+    # line = (
+    #     f"{log_time},{qual_name},{parcel_id},{owner_id},{prev_location},"
+    #     f"{next_location},{instruction_set},{cpu_percent},"
+    #     f"{cpu_temp},{ram_percent},{bytes_sent_mb},{bytes_recv_mb},{parcel_size_mb},{data_str}\n"
+    # )
+    # try:
+    #     with open(filepath, 'a', encoding='utf-8') as f:
+    #         f.write(line)
+    # except Exception as e:
+    #     raise ValueError(f'Failed to write log file "{filepath}": {e}')
