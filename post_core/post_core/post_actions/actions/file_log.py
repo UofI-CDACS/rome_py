@@ -27,7 +27,7 @@ async def file_log_parcel(station: Node, parcel, log_path: str):
     filename = f'log-{owner_id}-{hostname}.txt'
     filepath = os.path.join(log_folder, filename)
 
-    log_time = time.time_ns()
+    log_time = datetime.datetime.now()
     qual_name = station.get_fully_qualified_name()
     parcel_id = getattr(parcel, 'parcel_id', '<unknown>')
     prev_location = getattr(parcel, 'prev_location', '<unknown>')
@@ -55,7 +55,7 @@ async def file_log_parcel(station: Node, parcel, log_path: str):
     parcel_size_mb = sys.getsizeof(parcel) / (1024 * 1024)
     
     data = {
-        'log_time': datetime.datetime.fromtimestamp(log_time),
+        'log_time': log_time,
         'qual_name': qual_name,
         'parcel_id': parcel_id,
         'owner_id': owner_id,
