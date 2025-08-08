@@ -31,7 +31,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Loss Mode":CB "lossless!lossy" \
     --field="QOS Depth":NUM "$QOS_DEPTH" \
     --button="Launch:0" --button="Cancel:1" \
-    --separator=",")
+    --separator="|")
 
 YAD_EXIT_CODE=$?
 if [ $YAD_EXIT_CODE -ne 0 ]; then
