@@ -1,12 +1,11 @@
 import pandas as pd
 import os
 import glob
-
+import argparse
 # Get all log files and their identifiers
-log_files = glob.glob("/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-*.csv")
-identifiers = [os.path.basename(f).replace("log-", "").replace(".csv", "") for f in log_files]
-# Process each identifier
-for identifier in identifiers:
+def main(owner=None):
+    identifier = owner
+    # Process each identifier
     log_file = f"/home/rospi/Desktop/test_ws/src/post/post_scripts/logs/log-{identifier}.csv"
     graveyard_file = f"/home/rospi/Desktop/test_ws/graveyard/graveyard-{identifier}.csv"
     # Check if both files exist
@@ -84,7 +83,7 @@ for identifier in identifiers:
         #LATENCY
 
         #PARCEL LIFE SPAN
-        df_pls = df_all[['MSGID', 'TIMESTAMP_SECONDS', 'TIMESTAMP', 'PINAME']].copy()
+        #df_pls = df_all[['MSGID', 'TIMESTAMP_SECONDS', 'TIMESTAMP', 'PINAME']].copy()
 
         # TIME DISTRIBUTION OF LOST PARCELS(PARCELS LOST PER SECOND)
 
@@ -99,9 +98,14 @@ for identifier in identifiers:
         df_combined = df_combined.merge(df_pps[['TIMESTAMP_SECONDS', 'PINAME', 'PARCELS_PER_SECOND']], on=['TIMESTAMP_SECONDS', 'PINAME'], how='left')
         df_combined = df_combined.drop('TIMESTAMP_SECONDS', axis=1)
         df_combined.to_csv(f"/var/lib/Logsforgrafana/parcel_analysis_{identifier}.csv", index=False)
-    # Create DataFrame with filenames
-    all_files = [f for f in os.listdir("/var/lib/Logsforgrafana/") if f != "filenames.csv"]
-    df_filenames = pd.DataFrame(all_files, columns=['filenames'])
+        # Create DataFrame with filenames
+        all_files = [f for f in os.listdir("/var/lib/Logsforgrafana/") if f != "filenames.csv"]
+        df_filenames = pd.DataFrame(all_files, columns=['filenames'])
 
-    # Save to filenames.csv
-    df_filenames.to_csv(os.path.join("/var/lib/Logsforgrafana/", "filenames.csv"), index=False)
+        # Save to filenames.csv
+        df_filenames.to_csv(os.path.join("/var/lib/Logsforgrafana/", "filenames.csv"), index=False)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Parse logs from remote Raspberry Pis")
+    parser.add_argument('--owner', type=str, help='Owner ID to filter logs')
+    args = parser.parse_args()
+    main(owner=args.owner)

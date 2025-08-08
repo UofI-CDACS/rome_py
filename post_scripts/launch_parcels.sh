@@ -120,8 +120,7 @@ if [ "$PARSE_LOGS" = true ]; then
             break
         fi
     done
-    echo "Parsing logs..."
-    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py" --owner ${OWNER} --instruction_set ${INSTRUCTION_SET}
 fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
