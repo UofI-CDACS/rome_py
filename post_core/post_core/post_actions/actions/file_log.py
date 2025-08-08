@@ -52,7 +52,7 @@ async def file_log_parcel(station: Node, parcel, log_path: str):
     bytes_sent_mb = net_io.bytes_sent / (1024 * 1024)
     bytes_recv_mb = net_io.bytes_recv / (1024 * 1024)
     parcel_size_mb = sys.getsizeof(parcel) / (1024 * 1024)
-    log_time = datetime.datetime.strptime(datetime.datetime.now().isoformat(), "%Y-%m-%dT%H:%M:%S.000Z")
+    log_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")
     data = {
         'log_time': log_time,
         'qual_name': qual_name,
