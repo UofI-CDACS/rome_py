@@ -7,7 +7,7 @@ from rclpy.node import Node
 import psutil
 import pymongo
 
-database = pymongo.MongoClient("mongodb://172.23.254.20:27017/")
+database = pymongo.MongoClient("mongodb://root:example@172.23.254.20:27017/")
 collection = database['logs']['logs']
 
 
