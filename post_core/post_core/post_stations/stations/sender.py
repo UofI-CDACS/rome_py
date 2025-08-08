@@ -67,7 +67,7 @@ class SenderStation(Station):
             if self._sent_count >= self.count:
                 self.get_logger().info(f"Sent all {self.count} parcels. Stopping.")
                 self.timer.cancel()
-                return
+                raise SystemExit
             
             # Move all destination logic inside the lock
             if self.mode == 'round_robin':
