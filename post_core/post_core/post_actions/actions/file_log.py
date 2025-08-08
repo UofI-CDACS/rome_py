@@ -6,7 +6,7 @@ from ..registry import register_action
 from rclpy.node import Node
 import psutil
 import pymongo
-
+import datetime
 database = pymongo.MongoClient("mongodb://root:example@172.23.254.20:27017/")
 collection = database['logs']['logs']
 
@@ -53,8 +53,9 @@ async def file_log_parcel(station: Node, parcel, log_path: str):
     bytes_sent_mb = net_io.bytes_sent / (1024 * 1024)
     bytes_recv_mb = net_io.bytes_recv / (1024 * 1024)
     parcel_size_mb = sys.getsizeof(parcel) / (1024 * 1024)
+    
     data = {
-        'log_time': log_time,
+        'log_time': datetime.datetime.fromtimestamp(log_time),
         'qual_name': qual_name,
         'parcel_id': parcel_id,
         'owner_id': owner_id,
