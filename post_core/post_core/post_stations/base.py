@@ -45,7 +45,12 @@ class Station(Node):
             Parcel,
             f'{self.this_station}/parcels',
             self._on_parcel_received,
-            self.qos_profile
+            QoSProfile(
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                depth=depth,
+                history=HistoryPolicy.KEEP_ALL
+            )
         )
 
         # Create kill signal subscription with separate variable name
@@ -53,7 +58,12 @@ class Station(Node):
             StationKill,
             f'{self.this_station}/kill',
             self._on_kill_signal,
-            self.qos_profile
+            QoSProfile(
+                reliability=ReliabilityPolicy.RELIABLE,
+                durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                depth=depth,
+                history=HistoryPolicy.KEEP_ALL
+            )
         )
         
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
