@@ -65,7 +65,7 @@ class Station(Node):
             self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
         return self._pub_cache[qos_key]
 
-    async def send_parcel(self, parcel, next_location: str):
+    def send_parcel(self, parcel, next_location: str):
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
         publisher.publish(parcel)

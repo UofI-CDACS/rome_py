@@ -24,7 +24,7 @@ class LoopInstructionSet(InstructionSet):
         name = station.get_name().split("/")[-1]
 
         await dec_ttl(key="ttl")
-        log_parcel = get_action('file_log_parcel')(station, parcel)
+        #log_parcel = get_action('file_log_parcel')(station, parcel)
         await log_parcel(log_path=f"~/Desktop/test_ws/loop/{station.this_station}", is_sender_log=False)
 
         if not await check(key="ttl"):
