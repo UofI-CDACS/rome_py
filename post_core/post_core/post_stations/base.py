@@ -72,12 +72,11 @@ class Station(Node):
         
         log_parcel_action = get_action('file_log_parcel')
         await log_parcel_action(
-            station=self, 
-            parcel=parcel, 
-            log_path=f"~/Desktop/test_ws/loop/{self.this_station}", 
-            is_sender_log=True
+            self,                                                    # station
+            parcel,                                                  # parcel  
+            f"~/Desktop/test_ws/loop/{self.this_station}",          # log_path
+            True                                                     # is_sender_log
         )
-
     def _on_parcel_received(self, parcel):
         self.get_logger().info(f"Parcel received callback triggered for parcel {parcel.parcel_id}")
         try:
