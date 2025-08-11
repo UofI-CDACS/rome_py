@@ -6,11 +6,12 @@ from post_core.post_stations.base import Station
 from ..registry import register_station
 from post_core.post_actions import get_action
 from rcl_interfaces.msg import SetParametersResult
+import asyncio
 #import threading
 
 @register_station("sender")
 class SenderStation(Station):
-    async def __init__(self, name, loss_mode='lossy', depth=10):
+    def __init__(self, name, loss_mode='lossy', depth=10):
         # Pass loss_mode and depth to parent constructor
         super().__init__(name, loss_mode=loss_mode, depth=depth)
 
@@ -34,7 +35,7 @@ class SenderStation(Station):
         # Setup timer to send parcels at interval
         self.timer = self.create_timer(
             self.get_parameter('interval_sec').get_parameter_value().double_value,
-            await self.publish_parcel
+            self.publish_parcel
         )
         
         # Subscribe to param updates
@@ -62,7 +63,7 @@ class SenderStation(Station):
             self._rr_index = 0
         return SetParametersResult(successful=True)
         
-    async def publish_parcel(self):
+    def publish_parcel(self):
         #with self._state_lock:
         if self._sent_count >= self.count:
             self.get_logger().info(f"Sent all {self.count} parcels. Stopping.")
@@ -114,5 +115,5 @@ class SenderStation(Station):
             
             # Send parcel outside lock to avoid blocking
 
-        await self.send_parcel(parcel, full_destination)
+        asyncio.run(self.send_parcel(parcel, full_destination))
         self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")
