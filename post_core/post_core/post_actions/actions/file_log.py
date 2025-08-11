@@ -12,7 +12,7 @@ database = pymongo.MongoClient("mongodb://root:example@172.23.254.20:27017/")
 
 
 @register_action('file_log_parcel')
-async def file_log_parcel(station: Node, parcel, log_path: str, is_sender_log: bool):
+async def file_log_parcel(station: Node, parcel, log_path: str, is_sender_log: bool = False):
     if not isinstance(station, Node):
         raise TypeError("Expected an rclpy Node instance")
     
