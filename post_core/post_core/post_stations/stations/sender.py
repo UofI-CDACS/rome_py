@@ -114,5 +114,5 @@ class SenderStation(Station):
             
             # Send parcel outside lock to avoid blocking
         
-        self.send_parcel(parcel, full_destination)
+        await self.send_parcel(parcel, full_destination)
         self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")
