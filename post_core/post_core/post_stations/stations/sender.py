@@ -10,7 +10,7 @@ from rcl_interfaces.msg import SetParametersResult
 
 @register_station("sender")
 class SenderStation(Station):
-    def __init__(self, name, loss_mode='lossy', depth=10):
+    async def __init__(self, name, loss_mode='lossy', depth=10):
         # Pass loss_mode and depth to parent constructor
         super().__init__(name, loss_mode=loss_mode, depth=depth)
 
@@ -34,7 +34,7 @@ class SenderStation(Station):
         # Setup timer to send parcels at interval
         self.timer = self.create_timer(
             self.get_parameter('interval_sec').get_parameter_value().double_value,
-            self.publish_parcel
+            await self.publish_parcel
         )
         
         # Subscribe to param updates
@@ -62,7 +62,7 @@ class SenderStation(Station):
             self._rr_index = 0
         return SetParametersResult(successful=True)
         
-    def publish_parcel(self):
+    async def publish_parcel(self):
         #with self._state_lock:
         if self._sent_count >= self.count:
             self.get_logger().info(f"Sent all {self.count} parcels. Stopping.")
@@ -113,6 +113,6 @@ class SenderStation(Station):
         self._sent_count += 1
             
             # Send parcel outside lock to avoid blocking
-        
-        self.send_parcel(parcel, full_destination)
+
+        await self.send_parcel(parcel, full_destination)
         self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")

@@ -65,12 +65,12 @@ class Station(Node):
             self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
         return self._pub_cache[qos_key]
 
-    def send_parcel(self, parcel, next_location: str):
+    async def send_parcel(self, parcel, next_location: str):
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
         publisher.publish(parcel)
-        #log_parcel = get_action('file_log_parcel')(self, parcel, True)
-        #await log_parcel(log_path=f"~/Desktop/test_ws/loop/{self.this_station}", is_sender_log=True)
+        log_parcel = get_action('file_log_parcel')(self, parcel, True)
+        await log_parcel(log_path=f"~/Desktop/test_ws/loop/{self.this_station}", is_sender_log=True)
 
     def _on_parcel_received(self, parcel):
         self.get_logger().info(f"Parcel received callback triggered for parcel {parcel.parcel_id}")
