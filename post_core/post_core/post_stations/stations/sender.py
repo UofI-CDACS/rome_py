@@ -115,7 +115,6 @@ class SenderStation(Station):
             
             # Send parcel outside lock to avoid blocking
 
-        # FIXED: Properly handle async call within event loop
         try:
             loop = asyncio.get_running_loop()
             # Create task for async sending
@@ -126,7 +125,6 @@ class SenderStation(Station):
             self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")
         
     async def _send_parcel_async(self, parcel, destination):
-        """Async wrapper for send_parcel"""
         try:
             await self.send_parcel(parcel, destination)
             self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {destination}")
