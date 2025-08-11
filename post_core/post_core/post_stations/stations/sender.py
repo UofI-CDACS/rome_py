@@ -115,5 +115,20 @@ class SenderStation(Station):
             
             # Send parcel outside lock to avoid blocking
 
-        asyncio.run(self.send_parcel(parcel, full_destination))
-        self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")
+        # FIXED: Properly handle async call within event loop
+        try:
+            loop = asyncio.get_running_loop()
+            # Create task for async sending
+            task = loop.create_task(self._send_parcel_async(parcel, full_destination))
+        except RuntimeError:
+            # Fallback if no loop (shouldn't happen in ROS2)
+            self.get_logger().error("No event loop found for async sending")
+            self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")
+        
+    async def _send_parcel_async(self, parcel, destination):
+        """Async wrapper for send_parcel"""
+        try:
+            await self.send_parcel(parcel, destination)
+            self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {destination}")
+        except Exception as e:
+            self.get_logger().error(f"Failed to send parcel: {e}")
