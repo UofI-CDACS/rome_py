@@ -68,12 +68,13 @@ class Station(Node):
     async def send_parcel(self, parcel, next_location: str):
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
+        publisher.publish(parcel)
         log_parcel_action = get_action('file_log_parcel')(self, parcel)
         await log_parcel_action(                                        # parcel  
             f"~/Desktop/test_ws/loop/{self.this_station}",          # log_path
             True                                                     # is_sender_log
         )
-        publisher.publish(parcel)
+        
     def _on_parcel_received(self, parcel):
         self.get_logger().info(f"Parcel received callback triggered for parcel {parcel.parcel_id}")
         try:
