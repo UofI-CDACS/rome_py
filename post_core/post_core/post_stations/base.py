@@ -3,7 +3,8 @@ import rclpy
 from rclpy.node import Node
 from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
-import threading
+from ..post_actions.registry import get_action
+#import threading
 import datetime as dt
 import time
 
@@ -12,7 +13,7 @@ class Station(Node):
         super().__init__(f'{name}' or 'station_base')
         self.this_station = self.get_fully_qualified_name()
         self._pub_cache = {}
-        self._pub_lock = threading.Lock()
+        #self._pub_lock = threading.Lock()
         self.loss_mode = loss_mode
         self.depth = depth
         
@@ -58,17 +59,22 @@ class Station(Node):
     def get_publisher(self, topic_name: str, qos_profile: QoSProfile):
         # Include QoS in the cache key
         qos_key = f"{topic_name}_{qos_profile.reliability}_{qos_profile.durability}_{qos_profile.depth}"
-        
-        with self._pub_lock:
-            if qos_key not in self._pub_cache:
-                self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
-            return self._pub_cache[qos_key]
 
-    def send_parcel(self, parcel, next_location: str):
+        #with self._pub_lock:
+        if qos_key not in self._pub_cache:
+            self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
+        return self._pub_cache[qos_key]
+
+    async def send_parcel(self, parcel, next_location: str):
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
         publisher.publish(parcel)
-
+        log_parcel_action = get_action('file_log_parcel')(self, parcel)
+        await log_parcel_action(                                        # parcel  
+            f"~/Desktop/test_ws/loop/{self.this_station}",          # log_path
+            True                                                     # is_sender_log
+        )
+        
     def _on_parcel_received(self, parcel):
         self.get_logger().info(f"Parcel received callback triggered for parcel {parcel.parcel_id}")
         try:

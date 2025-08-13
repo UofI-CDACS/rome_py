@@ -31,7 +31,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Loss Mode":CB "lossless!lossy" \
     --field="QOS Depth":NUM "$QOS_DEPTH" \
     --button="Launch:0" --button="Cancel:1" \
-    --separator=",")
+    --separator="|")
 
 YAD_EXIT_CODE=$?
 if [ $YAD_EXIT_CODE -ne 0 ]; then
@@ -43,7 +43,7 @@ if [ -z "$FORM_OUTPUT" ]; then
     exit 1
 fi
 
-IFS=',' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS LOSS_MODE QOS_DEPTH <<< "$FORM_OUTPUT"
+IFS='|' read -r WORKSPACE_FOLDER STATION_NAME MODE DDS_CONFIG INTERVAL_MS TTL_VALUE PARCEL_COUNT OWNER INSTRUCTION_SET NEXT_LOCATION LOOP_INFINITELY CUSTOM_PARAMS LOSS_MODE QOS_DEPTH <<< "$FORM_OUTPUT"
 
 # Convert INTERVAL_MS to INTERVAL_SEC
 INTERVAL_SEC=$(echo "scale=3; $INTERVAL_MS / 1000" | bc)
@@ -95,7 +95,7 @@ else
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 #gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
-sleep 3
+#sleep 3
 ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
     -p destinations:="$NEXT_LOCATION" \
     -p count:=$PARCEL_COUNT \
@@ -105,9 +105,22 @@ ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_M
     -p instruction_set:="$INSTRUCTION_SET" \
     -p data:="$PARAMS_JSON"
 
-sleep 10
+sleep 5
 if [ "$PARSE_LOGS" = true ]; then
-    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+    HOSTNAME=$(hostname)
+    graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
+    prev_graveyard_linecount=0
+    while true; do
+        graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
+        if [ "$graveyard_linecount" -gt "$prev_graveyard_linecount" ]; then
+            sleep 1
+            prev_graveyard_linecount=$graveyard_linecount
+            echo "Waiting for logs to be written..."
+        else
+            break
+        fi
+    done
+    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py" --owner ${OWNER} --instruction_set ${INSTRUCTION_SET}
 fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
