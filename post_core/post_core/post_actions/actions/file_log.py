@@ -23,7 +23,7 @@ async def file_log_parcel(station: Node, parcel, log_path: str, is_sender_log: b
     os.makedirs(log_folder, exist_ok=True)
 
     owner_id = getattr(parcel, 'owner_id', 'unknown')
-    hostname = socket.gethostname()
+    #hostname = socket.gethostname()
     #filename = f'log-{owner_id}-{hostname}.txt'
     #filepath = os.path.join(log_folder, filename)
 
