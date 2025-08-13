@@ -10,6 +10,7 @@ class GraveyardStation(Station):
     async def parcel_callback(self, parcel: Parcel):
         self.get_logger().info(f"Received parcel {parcel.parcel_id} for processing.")
         parcel.next_location = None
+        parcel.timestamp_sent = None
         await self.log_parcel(
             parcel = parcel,
         )

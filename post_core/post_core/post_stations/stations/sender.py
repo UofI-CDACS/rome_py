@@ -93,7 +93,8 @@ class SenderStation(Station):
         parcel.parcel_id = str(uuid.uuid4())
         parcel.owner_id = self.get_parameter('owner_id').get_parameter_value().string_value
         parcel.instruction_set = self.get_parameter('instruction_set').get_parameter_value().string_value
-        
+        parcel.timestamp_recieved = None
+        parcel.prev_location = None
         namespace = self.get_namespace().strip('/')
         destination = destination.strip('/')
         full_destination = f"/{namespace}/{destination}" if namespace else f"/{destination}"
