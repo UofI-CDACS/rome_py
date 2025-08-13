@@ -93,7 +93,6 @@ class SenderStation(Station):
         parcel.parcel_id = str(uuid.uuid4())
         parcel.owner_id = self.get_parameter('owner_id').get_parameter_value().string_value
         parcel.instruction_set = self.get_parameter('instruction_set').get_parameter_value().string_value
-        parcel.timestamp_recieved = None
         parcel.prev_location = None
         namespace = self.get_namespace().strip('/')
         destination = destination.strip('/')
@@ -120,7 +119,7 @@ class SenderStation(Station):
 
     async def _send_parcel_async(self, parcel, destination):
         try:
-            await self.send_parcel(parcel, destination)
+            await self.send_parcel(parcel, destination, False)
             self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {destination}")
             self._sent_count += 1
         except Exception as e:

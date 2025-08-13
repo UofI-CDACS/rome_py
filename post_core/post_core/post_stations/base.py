@@ -129,7 +129,7 @@ class Station(Node):
         collection = database['logs']['logs']
         collection.insert_one(database_data)
 
-    async def send_parcel(self, parcel, next_location: str):
+    async def send_parcel(self, parcel, next_location: str, include_timestamp_rec = True):
         parcel.timestamp_sent = time.time_ns()
 
         prev_location = getattr(parcel, 'prev_location', None)
@@ -142,7 +142,8 @@ class Station(Node):
  
         #Revert for accurate logging
         parcel.prev_location = prev_location
- 
+        if not include_timestamp_rec:
+            parcel.timestamp_recieved = None
         await self.log_parcel(
             parcel = parcel,
         )
