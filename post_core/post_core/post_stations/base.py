@@ -104,8 +104,8 @@ class Station(Node):
         bytes_recv_mb = net_io.bytes_recv / (1024 * 1024)
         parcel_size_mb = sys.getsizeof(parcel) / (1024 * 1024)
         
-        timestamp_sent = parcel.getattr('timstamp_sent', None) 
-        timestamp_recieved = parcel.getattr('timestamp_recieved', None) 
+        timestamp_sent = getattr(parcel, 'timstamp_sent', None) 
+        timestamp_recieved = getattr(parcel, 'timestamp_recieved', None) 
 
         database_data = {
             'timestamp_sent': timestamp_sent,
@@ -132,7 +132,7 @@ class Station(Node):
     async def send_parcel(self, parcel, next_location: str):
         parcel.timestamp_sent = time.time_ns()
 
-        prev_location = parcel.getattr('prev_location', None)
+        prev_location = getattr(parcel, 'prev_location', None)
         parcel.prev_location = self.get_fully_qualified_name()
         parcel.next_location = next_location
 
