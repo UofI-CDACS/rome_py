@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser(description="Launch a station node")
     parser.add_argument('--type', required=True, help='Station type to run')
     parser.add_argument('--name', required=True, help='Station node name')
-    parser.add_argument('--timeout', required=False, default=0.1, help='Specifies timeout for parcel processing (default: 0.1 seconds)')
+    parser.add_argument('--timeout', required=False, default=0.01, help='Specifies timeout for parcel processing (default: 0.01 seconds)')
     parser.add_argument('--lossmode', required=False, default='lossy', help='Specifies loss mode for parcel transmission (default: lossy)')
     parser.add_argument('--depth', required=False, default=10, type=int, help='QoS depth for parcel topics (default: 10)')
     args = parser.parse_args(argv[1:])
@@ -28,7 +28,7 @@ def main():
         try:
             while rclpy.ok():
                 rclpy.spin_once(node, timeout_sec=float(args.timeout))
-                await asyncio.sleep(0.001)  # Small delay for async tasks
+                await asyncio.sleep(0.0)  # Small delay for async tasks
         except SystemExit:
             rclpy.logging.get_logger("Quitting").info('Done')
         finally:
