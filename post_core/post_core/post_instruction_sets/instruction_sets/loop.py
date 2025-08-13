@@ -31,6 +31,6 @@ class LoopInstructionSet(InstructionSet):
         if destination is None:
             return InstructionResult(signal=InstructionSignal.ERROR, notes=f"Unknown station name: {name}")
 
-        await fwd(destination=destination)
+        destination = await fwd(destination=destination)
 
         return InstructionResult(signal=InstructionSignal.CONTINUE, next_destination=destination)
