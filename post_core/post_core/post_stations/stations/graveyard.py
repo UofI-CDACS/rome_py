@@ -9,14 +9,9 @@ class GraveyardStation(Station):
 
     async def parcel_callback(self, parcel: Parcel):
         self.get_logger().info(f"Received parcel {parcel.parcel_id} for processing.")
-
-        InstructionSetClass = get_instruction_set('graveyard')
-        if InstructionSetClass is None:
-            self.get_logger().warn(f"No instruction set found for graveyard")
-            return
-
-        self.get_logger().info(f"Running instruction set graveyard for parcel {parcel.parcel_id}")
-        instruction_set = InstructionSetClass()
-        await instruction_set.run(self, parcel)
+        parcel.next_location = None
+        await self.log_parcel(
+            parcel = parcel,
+        )
         self.get_logger().info(f"Parcel {parcel.parcel_id} processed successfully.")
 

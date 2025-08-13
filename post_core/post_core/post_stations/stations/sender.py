@@ -89,7 +89,6 @@ class SenderStation(Station):
             destination = self.destinations[self._rr_index % len(self.destinations)]
             self._rr_index += 1
         
-        # Create parcel inside lock to ensure consistent state
         parcel = Parcel()
         parcel.parcel_id = str(uuid.uuid4())
         parcel.owner_id = self.get_parameter('owner_id').get_parameter_value().string_value
@@ -99,9 +98,6 @@ class SenderStation(Station):
         destination = destination.strip('/')
         full_destination = f"/{namespace}/{destination}" if namespace else f"/{destination}"
         
-        parcel.prev_location = self.this_station
-        parcel.next_location = full_destination
-        
         raw_data = self.get_parameter('data').get_parameter_value().string_array_value
         for entry in raw_data:
             try:
@@ -110,23 +106,21 @@ class SenderStation(Station):
                 parcel.data.append(kv)
             except ValueError:
                 self.get_logger().warn(f"Invalid data entry: '{entry}'")
-        
-        self._sent_count += 1
-            
-            # Send parcel outside lock to avoid blocking
-
+ 
         try:
             loop = asyncio.get_running_loop()
             # Create task for async sending
-            task = loop.create_task(self._send_parcel_async(parcel, full_destination))
+            loop.create_task(self._send_parcel_async(parcel, full_destination))
         except RuntimeError:
             # Fallback if no loop (shouldn't happen in ROS2)
-            self.get_logger().error("No event loop found for async sending")
-            self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {full_destination}")
-        
+            self.get_logger().error(f"Failed to send parcel: No event loop found for async sending")
+
+
+
     async def _send_parcel_async(self, parcel, destination):
         try:
             await self.send_parcel(parcel, destination)
             self.get_logger().info(f"Sent parcel {self._sent_count}/{self.count} to {destination}")
+            self._sent_count += 1
         except Exception as e:
             self.get_logger().error(f"Failed to send parcel: {e}")

@@ -4,9 +4,15 @@ from rclpy.node import Node
 from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from ..post_actions.registry import get_action
-#import threading
 import datetime as dt
+
+import uuid
 import time
+import psutil
+import sys
+
+import pymongo
+database = pymongo.MongoClient("mongodb://root:example@172.23.254.20:27017/")
 
 class Station(Node):
     def __init__(self, name=None, loss_mode='lossy', depth=10):
@@ -65,17 +71,85 @@ class Station(Node):
             self._pub_cache[qos_key] = self.create_publisher(Parcel, topic_name, qos_profile)
         return self._pub_cache[qos_key]
 
+    async def log_parcel(self, parcel):
+        #Identifiers
+        owner_id = getattr(parcel, 'owner_id', 'unknown')
+        parcel_id = getattr(parcel, 'parcel_id', '<unknown>')
+
+        prev_location = getattr(parcel, 'prev_location', '<unknown>')
+        curr_location = self.get_fully_qualified_name()
+        next_location = getattr(parcel, 'next_location', '<unknown>')
+
+        #instruction_set  = getattr(parcel, 'instruction_set', '<unknown>')
+        #data = getattr(parcel, 'data', {})
+
+        #Analytics
+        cpu_percent = psutil.cpu_percent(interval=None)
+        cpu_temp = None
+        try:
+            temps = psutil.sensors_temperatures()
+            if 'coretemp' in temps:
+                cpu_temp = temps['coretemp'][0].current
+            elif 'cpu_thermal' in temps:
+                cpu_temp = temps['cpu_thermal'][0].current
+        except:
+            cpu_temp = "N/A"
+
+        memory = psutil.virtual_memory()
+        ram_percent = memory.percent
+ 
+        # Network usage
+        net_io = psutil.net_io_counters()
+        bytes_sent_mb = net_io.bytes_sent / (1024 * 1024)
+        bytes_recv_mb = net_io.bytes_recv / (1024 * 1024)
+        parcel_size_mb = sys.getsizeof(parcel) / (1024 * 1024)
+        
+        timestamp_sent = parcel.getattr('timstamp_sent', None) 
+        timestamp_recieved = parcel.getattr('timestamp_recieved', None) 
+
+        database_data = {
+            'timestamp_sent': timestamp_sent,
+            'timestamp_recieved': timestamp_recieved,
+            
+            'parcel_id': parcel_id,
+            'owner_id': owner_id,
+            
+            'prev_location': prev_location,
+            'curr_location': curr_location,
+            'next_location': next_location,
+
+            'cpu_percent': cpu_percent,
+            'cpu_temp': cpu_temp,
+            'ram_percent': ram_percent,
+            'bytes_sent_mb': bytes_sent_mb,
+            'bytes_recv_mb': bytes_recv_mb,
+            'parcel_size_mb': parcel_size_mb,
+        }
+ 
+        collection = database['logs']['logs']
+        collection.insert_one(database_data)
+
     async def send_parcel(self, parcel, next_location: str):
+        parcel.timestamp_sent = time.time_ns()
+
+        prev_location = parcel.getattr('prev_location', None)
+        parcel.prev_location = self.get_fully_qualified_name()
+        parcel.next_location = next_location
+
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
         publisher.publish(parcel)
-        log_parcel_action = get_action('file_log_parcel')(self, parcel)
-        await log_parcel_action(                                        # parcel  
-            f"~/Desktop/test_ws/loop/{self.this_station}",          # log_path
-            True                                                     # is_sender_log
+ 
+        #Revert for accurate logging
+        parcel.prev_location = prev_location
+ 
+        await self.log_parcel(
+            parcel = parcel,
         )
-        
+ 
     def _on_parcel_received(self, parcel):
+        parcel.timestamp_recieved = time.time_ns()
+
         self.get_logger().info(f"Parcel received callback triggered for parcel {parcel.parcel_id}")
         try:
             loop = asyncio.get_running_loop()
@@ -104,3 +178,4 @@ class Station(Node):
             self._pub_cache.clear()
         except:
             pass  # Ignore cleanup errors during shutdown
+

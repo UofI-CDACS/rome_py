@@ -27,12 +27,10 @@ class LoopDynamicInstructionSet(InstructionSet):
     async def run(self, station, parcel) -> InstructionResult:
         # Bind actions
         dec_ttl = get_action("decrement_data_key")(station, parcel)
-        log_parcel = get_action("file_log_parcel")(station, parcel)
         check_ttl = get_action("check_ttl")(station, parcel)
         forward = get_action("forward")(station, parcel)
 
         await dec_ttl(key="ttl")
-        await log_parcel(log_path=f"~/test_ws/loop_dynamic/{station.this_station}")
 
         if not await check_ttl(key="ttl"):
             return InstructionResult(signal=InstructionSignal.GRAVEYARD)

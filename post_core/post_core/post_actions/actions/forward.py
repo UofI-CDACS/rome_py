@@ -12,7 +12,4 @@ async def forward(station: Node, parcel: Parcel, destination: str):
     if not destination.startswith('/'):
         destination = f'/{namespace}/{destination.strip("/")}' if namespace else f'/{destination.strip("/")}'
 
-    parcel.prev_location = getattr(station, 'this_station', '<unknown>')
-    parcel.next_location = destination
-
     return destination
