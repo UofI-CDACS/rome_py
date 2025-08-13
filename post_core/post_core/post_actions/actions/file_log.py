@@ -6,7 +6,7 @@ from ..registry import register_action
 from rclpy.node import Node
 import psutil
 @register_action('file_log_parcel')
-async def file_log_parcel(station: Node, parcel, log_path: str):
+async def file_log_parcel(station: Node, parcel, log_path: str, is_sender_log: bool):
     if not isinstance(station, Node):
         raise TypeError("Expected an rclpy Node instance")
     
@@ -50,7 +50,7 @@ async def file_log_parcel(station: Node, parcel, log_path: str):
     line = (
         f"{log_time},{qual_name},{parcel_id},{owner_id},{prev_location},"
         f"{next_location},{instruction_set},{cpu_percent},"
-        f"{cpu_temp},{ram_percent},{bytes_sent_mb},{bytes_recv_mb},{parcel_size_mb},{data_str}\n"
+        f"{cpu_temp},{ram_percent},{bytes_sent_mb},{bytes_recv_mb},{parcel_size_mb},{is_sender_log},{data_str}\n"
     )
     try:
         with open(filepath, 'a', encoding='utf-8') as f:
