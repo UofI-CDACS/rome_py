@@ -15,8 +15,8 @@ class LoopInstructionSet(InstructionSet):
         # Map current station to the next destination
         next_map = {
             "rospi_1": "rospi_2",
-            "rospi_2": "rospi_4",
-            #"rospi_3": "rospi_4",
+            "rospi_2": "rospi_3",
+            "rospi_3": "rospi_4",
             "rospi_4": "rospi_1",
         }
 
