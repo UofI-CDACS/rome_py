@@ -72,12 +72,12 @@ if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
 else
     PARAMS=""
 fi
-yad --question --title="Parse Logs" --text="Do you want to parse the logs?" --button=Yes:0 --button=No:1
-if [ $? -eq 0 ]; then
-    PARSE_LOGS=true
-else
-    PARSE_LOGS=false
-fi
+#yad --question --title="Parse Logs" --text="Do you want to parse the logs?" --button=Yes:0 --button=No:1
+#if [ $? -eq 0 ]; then
+#    PARSE_LOGS=true
+#else
+#    PARSE_LOGS=false
+#fi
 
 cd $WORKSPACE_FOLDER
 source "$WORKSPACE_FOLDER/install/setup.bash"
@@ -89,11 +89,40 @@ else
     PARAMS_JSON="{}"
 fi
 if [ -n "$PARAMS" ]; then
-    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ['ttl:"$TTL_VALUE"']')
+    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ["ttl:'$TTL_VALUE'"]')
 else
-    PARAMS_JSON="['ttl:"$TTL_VALUE"']"
+    PARAMS_JSON='["ttl:'$TTL_VALUE'"]'
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
+python3 -c "
+import pymongo
+import json
+from datetime import datetime
+
+# MongoDB connection
+database = pymongo.MongoClient('mongodb://root:example@172.23.254.20:27017/')
+collection = database['logs']['launchSettings']
+
+# Prepare document
+doc = {
+    'timestamp': datetime.now(),
+    'station_name': '$STATION_NAME',
+    'mode': '$MODE',
+    'interval_sec': float('$INTERVAL_SEC'),
+    'ttl_value': int('$TTL_VALUE'),
+    'dds_config': '$DDS_CONFIG',
+    'parcel_count': int('$PARCEL_COUNT'),
+    'owner': '$OWNER',
+    'instruction_set': '$INSTRUCTION_SET',
+    'send_locations': '$NEXT_LOCATION',
+    'loss_mode': '$LOSS_MODE',
+    'qos_depth': int('$QOS_DEPTH'),
+    }
+
+# Insert document
+collection.insert_one(doc)
+print('Data sent to MongoDB successfully')
+"
 #gnome-terminal -- bash -c "cd $WORKSPACE_FOLDER && source $WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG && source $WORKSPACE_FOLDER/install/setup.bash && ros2 run post_core station --type graveyard --name default_graveyard --lossmode $LOSS_MODE --depth $QOS_DEPTH; exec bash"
 #sleep 3
 ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
@@ -105,23 +134,22 @@ ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_M
     -p instruction_set:="$INSTRUCTION_SET" \
     -p data:="$PARAMS_JSON"
 
-sleep 5
-if [ "$PARSE_LOGS" = true ]; then
-    HOSTNAME=$(hostname)
-    graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
-    prev_graveyard_linecount=0
-    while true; do
-        graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
-        if [ "$graveyard_linecount" -gt "$prev_graveyard_linecount" ]; then
-            sleep 1
-            prev_graveyard_linecount=$graveyard_linecount
-            echo "Waiting for logs to be written..."
-        else
-            break
-        fi
-    done
-    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py" --owner ${OWNER} --instruction_set ${INSTRUCTION_SET}
-fi
+#if [ "$PARSE_LOGS" = true ]; then
+#    HOSTNAME=$(hostname)
+#    graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
+#    prev_graveyard_linecount=0
+#    while true; do
+#        graveyard_linecount=$(wc -l < "${WORKSPACE_FOLDER}/graveyard/default_graveyard/log-${OWNER}-${HOSTNAME}.txt")
+#        if [ "$graveyard_linecount" -gt "$prev_graveyard_linecount" ]; then
+#            sleep 1
+#           prev_graveyard_linecount=$graveyard_linecount
+#            echo "Waiting for logs to be written..."
+#        else
+#            break
+#        fi
+#   done
+#    python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py" --owner ${OWNER} --instruction_set ${INSTRUCTION_SET}
+#fi
 
 if [ "$LOOP_INFINITELY" = "TRUE" ]; then
     ros2 run post_core station --type sender --name $STATION_NAME --lossmode $LOSS_MODE --depth $QOS_DEPTH --ros-args \
