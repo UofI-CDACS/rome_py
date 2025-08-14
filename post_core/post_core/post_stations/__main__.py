@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser(description="Launch a station node")
     parser.add_argument('--type', required=True, help='Station type to run')
     parser.add_argument('--name', required=True, help='Station node name')
-    parser.add_argument('--timeout', required=False, default=0.000, help='Specifies timeout for parcel processing (default: 0.0001 seconds)')
+    parser.add_argument('--timeout', required=False, default=60.0, help='Specifies timeout for parcel processing (default: 0.0001 seconds)')
     parser.add_argument('--lossmode', required=False, default='lossy', help='Specifies loss mode for parcel transmission (default: lossy)')
     parser.add_argument('--depth', required=False, default=10, type=int, help='QoS depth for parcel topics (default: 10)')
     args = parser.parse_args(argv[1:])
