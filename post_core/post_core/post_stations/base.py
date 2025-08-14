@@ -130,7 +130,7 @@ class Station(Node):
         collection.insert_one(database_data)
 
     async def send_parcel(self, parcel, next_location: str, include_timestamp_rec = True):
-        parcel.timestamp_sent = time.time_ns()
+        
 
         prev_location = getattr(parcel, 'prev_location', None)
         parcel.prev_location = self.get_fully_qualified_name()
@@ -138,6 +138,7 @@ class Station(Node):
 
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
+        parcel.timestamp_sent = time.time_ns()
         publisher.publish(parcel)
  
         #Revert for accurate logging
