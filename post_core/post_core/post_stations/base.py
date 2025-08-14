@@ -138,9 +138,9 @@ class Station(Node):
 
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
-        parcel.timestamp_sent = time.time_ns()
+        
         publisher.publish(parcel)
- 
+        parcel.timestamp_sent = time.time_ns()
         #Revert for accurate logging
         parcel.prev_location = prev_location
         if not include_timestamp_rec:
