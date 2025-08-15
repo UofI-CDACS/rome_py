@@ -5,6 +5,7 @@ from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from ..post_actions.registry import get_action
 import datetime as dt
+from rclpy.utilities import copy_message
 
 import uuid
 import time
@@ -128,6 +129,24 @@ class Station(Node):
  
         collection = database['logs']['logs']
         collection.insert_one(database_data)
+
+
+    async def send_parcel(self, parcel, next_location: str, include_timestamp_rec=True):
+        parcel.timestamp_sent = time.time_ns()
+        
+        # Make a safe copy for publishing
+        published_parcel = copy_message(parcel)
+        published_parcel.prev_location = self.get_fully_qualified_name()
+        published_parcel.next_location = next_location
+
+        topic = f'{next_location}/parcels'
+        publisher = self.get_publisher(topic, self.qos_profile)
+        publisher.publish(published_parcel)
+
+        if not include_timestamp_rec:
+            parcel.timestamp_recieved = None
+
+        await self.log_parcel(parcel=parcel)
 
     async def send_parcel(self, parcel, next_location: str, include_timestamp_rec = True):
         
