@@ -5,9 +5,7 @@ from post_interfaces.msg import Parcel, StationKill
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 from ..post_actions.registry import get_action
 import datetime as dt
-from rclpy.utilities import copy_message
 
-import uuid
 import time
 import psutil
 import sys
@@ -133,9 +131,15 @@ class Station(Node):
 
     async def send_parcel(self, parcel, next_location: str, include_timestamp_rec=True):
         parcel.timestamp_sent = time.time_ns()
-        
-        # Make a safe copy for publishing
-        published_parcel = copy_message(parcel)
+ 
+        # Create a new message of the same type
+        published_parcel = type(parcel)()
+
+        # Copy all fields from the original parcel
+        for field_name in parcel.get_fields_and_field_types():
+            setattr(published_parcel, field_name, getattr(parcel, field_name))
+
+        # Update fields for publishing
         published_parcel.prev_location = self.get_fully_qualified_name()
         published_parcel.next_location = next_location
 
@@ -147,26 +151,6 @@ class Station(Node):
             parcel.timestamp_recieved = None
 
         await self.log_parcel(parcel=parcel)
-
-    async def send_parcel(self, parcel, next_location: str, include_timestamp_rec = True):
-        
-
-        prev_location = getattr(parcel, 'prev_location', None)
-        parcel.prev_location = self.get_fully_qualified_name()
-        parcel.next_location = next_location
-
-        topic = f'{next_location}/parcels'
-        publisher = self.get_publisher(topic, self.qos_profile)
-        
-        publisher.publish(parcel)
-        parcel.timestamp_sent = time.time_ns()
-        #Revert for accurate logging
-        parcel.prev_location = prev_location
-        if not include_timestamp_rec:
-            parcel.timestamp_recieved = None
-        await self.log_parcel(
-            parcel = parcel,
-        )
  
     def _on_parcel_received(self, parcel):
         parcel.timestamp_recieved = time.time_ns()
