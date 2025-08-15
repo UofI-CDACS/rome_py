@@ -89,9 +89,9 @@ else
     PARAMS_JSON="{}"
 fi
 if [ -n "$PARAMS" ]; then
-    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ['ttl:"$TTL_VALUE"']')
+    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ["ttl:'$TTL_VALUE'"]')
 else
-    PARAMS_JSON="['ttl:"$TTL_VALUE"']"
+    PARAMS_JSON='["ttl:'$TTL_VALUE'"]'
 fi
 echo "PARAMS_JSON: $PARAMS_JSON"
 python3 -c "
@@ -100,7 +100,7 @@ import json
 from datetime import datetime
 
 # MongoDB connection
-database = pymongo.MongoClient("mongodb://root:example@172.23.254.20:27017/")
+database = pymongo.MongoClient('mongodb://root:example@172.23.254.20:27017/')
 collection = database['logs']['launchSettings']
 
 # Prepare document
