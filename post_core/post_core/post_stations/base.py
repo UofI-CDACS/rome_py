@@ -131,7 +131,7 @@ class Station(Node):
 
     async def send_parcel(self, parcel, next_location: str, include_timestamp_rec=True):
         parcel.timestamp_sent = time.time_ns()
- 
+        parcel.next_location = next_location
         # Create a new message of the same type
         published_parcel = type(parcel)()
 
@@ -141,7 +141,6 @@ class Station(Node):
 
         # Update fields for publishing
         published_parcel.prev_location = self.get_fully_qualified_name()
-        published_parcel.next_location = next_location
 
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
