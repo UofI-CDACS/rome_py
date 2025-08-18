@@ -23,7 +23,6 @@ declare -A PI_NAMES=(
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
   [172.23.254.18]="rospi_4"
-  [172.23.254.18]="rospi_5"
 )
 
 declare -A PI_TYPES=(
@@ -46,13 +45,13 @@ launch_station_tmux_local() {
   local qos_depth="$8"
 
   local session_name="post_launch"
-  local window_name="${ip//./_}"
+  local window_name="${node_name}"  # Use node_name instead of IP for unique windows
 
   # Create new window (or session if none exists)
   if ! tmux has-session -t "$session_name" 2>/dev/null; then
     tmux new-session -d -s "$session_name" -n "$window_name"
   else
-    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
+    if tmux list-windows -t "$session_name" | grep -q "^[0-9]*: $window_name"; then
       tmux kill-window -t "${session_name}:$window_name"
     fi
     tmux new-window -t "$session_name" -n "$window_name"
@@ -144,9 +143,13 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
   if tmux has-session -t post_launch 2>/dev/null; then
     tmux kill-session -t post_launch
   fi
+  pinum=1
   for ip in "${!PI_NAMES[@]}"; do
-    launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
-    sleep 2
+    for i in {1..4}; do
+      launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "rospi_$pinum" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+      sleep 2
+      pinum=$((pinum + 1))
+    done
   done
   echo "Local tmux session 'post_launch' created with windows for each Pi."
   echo "Attach using: tmux attach-session -t post_launch"
