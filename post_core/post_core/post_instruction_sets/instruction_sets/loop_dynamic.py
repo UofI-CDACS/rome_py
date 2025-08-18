@@ -62,7 +62,7 @@ class LoopDynamicInstructionSet(InstructionSet):
             return InstructionResult(signal=InstructionSignal.ERROR, 
                                    notes=f"Current station '{current_station_name}' not found in route map {route_map}")
 
-        # Forward parcel
-        await forward(destination=next_destination)
+        # FIXED: Capture the return value from forward action (same as loop.py)
+        destination = await forward(destination=next_destination)
 
-        return InstructionResult(signal=InstructionSignal.CONTINUE, next_destination=next_destination)
+        return InstructionResult(signal=InstructionSignal.CONTINUE, next_destination=destination)
