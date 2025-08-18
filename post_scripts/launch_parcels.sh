@@ -72,7 +72,7 @@ if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
 else
     PARAMS=""
 fi
-ROUTE_DEFAULT='{"rospi_1": "rospi_2", "rospi_2": "rospi_3", "rospi_3": "rospi_4", "rospi_4": "rospi_1"}'
+ROUTE_DEFAULT='["rospi_1": "rospi_2", "rospi_2": "rospi_3", "rospi_3": "rospi_4", "rospi_4": "rospi_1"]'
 if [ $INSTRUCTION_SET = "loop_dynamic" ]; then
     ROUTE_MAP=$(yad --entry --title="Dynamic Route Configuration" --text="Enter route mapping (JSON format):\nExample: {\"rospi_1\": \"rospi_2\", \"rospi_2\": \"rospi_4\", \"rospi_3\": \"rospi_1\", \"rospi_4\": \"rospi_3\"}" --entry-text "$ROUTE_DEFAULT" --button="OK:0" --button="Cancel:1" --width=600 --height=200)
     if [ $? -ne 0 ] || [ -z "$ROUTE_MAP" ]; then
