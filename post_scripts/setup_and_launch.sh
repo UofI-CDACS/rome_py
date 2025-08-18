@@ -23,6 +23,7 @@ declare -A PI_NAMES=(
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
   [172.23.254.18]="rospi_4"
+  [172.23.254.18]="rospi_5"
 )
 
 declare -A PI_TYPES=(
@@ -143,12 +144,9 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
   if tmux has-session -t post_launch 2>/dev/null; then
     tmux kill-session -t post_launch
   fi
-  pi_num=1
-  for ip in "${!PI_USERS[@]}"; do
-      for i in {1..4}; do
-        launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}_station_$i" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
-        sleep 2
-      done
+  for ip in "${!PI_NAMES[@]}"; do
+    launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+    sleep 2
   done
   echo "Local tmux session 'post_launch' created with windows for each Pi."
   echo "Attach using: tmux attach-session -t post_launch"
