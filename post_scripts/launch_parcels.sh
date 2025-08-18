@@ -72,6 +72,15 @@ if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
 else
     PARAMS=""
 fi
+ROUTE_DEFAULT='{"rospi_1": "rospi_2", "rospi_2": "rospi_3", "rospi_3": "rospi_4", "rospi_4": "rospi_1"}'
+if [ $INSTRUCTION_SET = "loop_dynamic" ]; then
+    ROUTE_MAP=$(yad --entry --title="Dynamic Route Configuration" --text="Enter route mapping (JSON format):\nExample: {\"rospi_1\": \"rospi_2\", \"rospi_2\": \"rospi_4\", \"rospi_3\": \"rospi_1\", \"rospi_4\": \"rospi_3\"}" --entry-text "$ROUTE_DEFAULT" --button="OK:0" --button="Cancel:1" --width=600 --height=200)
+    if [ $? -ne 0 ] || [ -z "$ROUTE_MAP" ]; then
+        echo "Route configuration cancelled or empty"
+        exit 1
+    fi
+    echo "ROUTE_MAP: $ROUTE_MAP"
+fi
 #yad --question --title="Parse Logs" --text="Do you want to parse the logs?" --button=Yes:0 --button=No:1
 #if [ $? -eq 0 ]; then
 #    PARSE_LOGS=true
@@ -91,8 +100,13 @@ fi
 if [ -n "$PARAMS" ]; then
     PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ["ttl:'$TTL_VALUE'"]')
 else
-    PARAMS_JSON='["ttl:'$TTL_VALUE'"]'
+    if ["ROUTE_MAP" = ""]; then
+        PARAMS_JSON='["ttl:'$TTL_VALUE'"]'
+    else
+    PARAMS_JSON='["ttl:'$TTL_VALUE'", "route:'$ROUTE_MAP'"]'
+    fi
 fi
+
 echo "PARAMS_JSON: $PARAMS_JSON"
 python3 -c "
 import pymongo
@@ -161,6 +175,7 @@ if [ "$LOOP_INFINITELY" = "TRUE" ]; then
         -p instruction_set:="$INSTRUCTION_SET" \
         -p data:="$PARAMS_JSON"
     sleep 5 # This should be adjusted to be more accurate on when the logging is done
-    if [ "$PARSE_LOGS" = true ]; then
-        python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+        if [ "$PARSE_LOGS" = true ]; then
+            python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+        fi
     fi
