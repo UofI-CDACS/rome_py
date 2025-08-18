@@ -146,8 +146,7 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
   pi_num=1
   for ip in "${!PI_USERS[@]}"; do
       for i in {1..4}; do
-        launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "rospi_$pi_num" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
-        pi_num=$((pi_num + 1))
+        launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}_station_$i" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
       done
   done
   echo "Local tmux session 'post_launch' created with windows for each Pi."
