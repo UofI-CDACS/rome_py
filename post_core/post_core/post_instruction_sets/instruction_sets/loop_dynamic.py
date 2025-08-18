@@ -35,47 +35,32 @@ class LoopDynamicInstructionSet(InstructionSet):
         if not await check_ttl(key="ttl"):
             return InstructionResult(signal=InstructionSignal.GRAVEYARD)
 
-        # Read route JSON string from parcel data
+        # Read route map JSON string from parcel data
         route_json = get_parcel_data_value(parcel, "route")
         if not route_json:
-            # Fallback to default route if not provided
-            route = ["rospi_1", "rospi_2", "rospi_3", "rospi_4"]
+            # Fallback to default route map if not provided
+            route_map = {
+                "rospi_1": "rospi_2",
+                "rospi_2": "rospi_3", 
+                "rospi_3": "rospi_4",
+                "rospi_4": "rospi_1"
+            }
         else:
             try:
-                route = json.loads(route_json)
-                if not isinstance(route, list) or not route:
-                    raise ValueError("Route must be a non-empty array")
+                route_map = json.loads(route_json)
+                if not isinstance(route_map, dict) or not route_map:
+                    raise ValueError("Route must be a non-empty object/map")
             except Exception as e:
                 return InstructionResult(signal=InstructionSignal.ERROR, notes=f"Invalid 'route' format: {e}")
-
-        # Get current index, default to 0
-        index_str = get_parcel_data_value(parcel, "route_index", "0")
-        try:
-            index = int(index_str)
-        except ValueError:
-            index = 0
 
         # Current station name (strip namespace)
         current_station_name = station.get_name().split("/")[-1]
 
-        # Find current station in route
-        if current_station_name not in route:
+        # Get next destination from route map
+        next_destination = route_map.get(current_station_name)
+        if next_destination is None:
             return InstructionResult(signal=InstructionSignal.ERROR, 
-                                   notes=f"Current station '{current_station_name}' not found in route {route}")
-
-        # Get current position in route
-        try:
-            current_index = route.index(current_station_name)
-        except ValueError:
-            return InstructionResult(signal=InstructionSignal.ERROR, 
-                                   notes=f"Current station '{current_station_name}' not in route")
-
-        # Calculate next index, wrap around
-        next_index = (current_index + 1) % len(route)
-        next_destination = route[next_index]
-
-        # Update parcel data with next index
-        set_parcel_data_value(parcel, "route_index", str(next_index))
+                                   notes=f"Current station '{current_station_name}' not found in route map {route_map}")
 
         # Forward parcel
         await forward(destination=next_destination)
