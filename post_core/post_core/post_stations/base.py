@@ -6,7 +6,6 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPo
 from ..post_actions.registry import get_action
 import datetime as dt
 
-import uuid
 import time
 import psutil
 import sys
@@ -129,25 +128,28 @@ class Station(Node):
         collection = database['logs']['logs']
         collection.insert_one(database_data)
 
-    async def send_parcel(self, parcel, next_location: str, include_timestamp_rec = True):
-        
 
-        prev_location = getattr(parcel, 'prev_location', None)
-        parcel.prev_location = self.get_fully_qualified_name()
+    async def send_parcel(self, parcel, next_location: str, include_timestamp_rec=True):
+        parcel.timestamp_sent = time.time_ns()
         parcel.next_location = next_location
+        # Create a new message of the same type
+        published_parcel = type(parcel)()
+
+        # Copy all fields from the original parcel
+        for field_name in parcel.get_fields_and_field_types():
+            setattr(published_parcel, field_name, getattr(parcel, field_name))
+
+        # Update fields for publishing
+        published_parcel.prev_location = self.get_fully_qualified_name()
 
         topic = f'{next_location}/parcels'
         publisher = self.get_publisher(topic, self.qos_profile)
-        
-        publisher.publish(parcel)
-        parcel.timestamp_sent = time.time_ns()
-        #Revert for accurate logging
-        parcel.prev_location = prev_location
+        publisher.publish(published_parcel)
+
         if not include_timestamp_rec:
             parcel.timestamp_recieved = None
-        await self.log_parcel(
-            parcel = parcel,
-        )
+
+        await self.log_parcel(parcel=parcel)
  
     def _on_parcel_received(self, parcel):
         parcel.timestamp_recieved = time.time_ns()
