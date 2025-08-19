@@ -147,7 +147,6 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
   for ip in "${!PI_NAMES[@]}"; do
     for i in {1..4}; do
       launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "rospi_$pinum" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
-      sleep 2
       pinum=$((pinum + 1))
     done
   done
