@@ -94,7 +94,7 @@
     /// ROS setting: By default accept incoming connections only from localhost (i.e. from colocalized Nodes).
     ///              All communications with other hosts are routed by the Zenoh router.
     endpoints: [
-      "tcp/localhost:0"
+      "udp/[::]:0"
     ],
 
     /// Global listen configuration,
