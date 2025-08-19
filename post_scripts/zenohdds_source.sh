@@ -18,7 +18,7 @@ main() {
   check_file "$config_file"
   check_file "$ros_setup"
 
-  export RMW_IMPLEMENTATION=rmw_zenohdds_cpp
+  export RMW_IMPLEMENTATION=rmw_zenoh_cpp
   export ZENOHDDS_URI="$config_file"
   export ROS_DOMAIN_ID=42
 
