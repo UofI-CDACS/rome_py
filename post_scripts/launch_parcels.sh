@@ -134,6 +134,7 @@ doc = {
     'send_locations': '$NEXT_LOCATION',
     'loss_mode': '$LOSS_MODE',
     'qos_depth': int('$QOS_DEPTH'),
+    'dynamic_sending' : '$ROUTE_MAP' 
     }
 
 # Insert document
