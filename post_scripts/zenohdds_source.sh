@@ -19,7 +19,7 @@ main() {
   check_file "$ros_setup"
 
   export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-  export ZENOHDDS_URI="$config_file"
+  export ZENOH_SESSION_CONFIG_URI="$config_file"
   export ROS_DOMAIN_ID=42
 
   set +u
