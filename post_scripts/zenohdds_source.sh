@@ -20,6 +20,7 @@ main() {
 
   export RMW_IMPLEMENTATION=rmw_zenoh_cpp
   export ZENOH_SESSION_CONFIG_URI="$config_file"
+  export ZENOH_ROUTER_CHECK_ATTEMPTS=-1
   export ROS_DOMAIN_ID=42
 
   set +u
