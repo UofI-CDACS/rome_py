@@ -18,7 +18,7 @@ declare -A PI_USERS=(
 )
 
 declare -A PI_NAMES=(
-  [127.0.0.1]="default_graveyard"
+  #[127.0.0.1]="default_graveyard"
   [172.23.254.24]="rospi_1"
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
@@ -90,7 +90,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" \
   --text="Configure Launch Parameters" \
   --field="Workspace Folder:TXT" "${DEFAULT_WORKSPACE}" \
   --field="Branch Name:TXT" "${DEFAULT_BRANCH}" \
-  --field="DDS Config:CB" "cyclonedds_source.sh!fastrtps_source.sh" \
+  --field="DDS Config:CB" "cyclonedds_source.sh!zenohdds_source.sh!fastrtps_source.sh" \
   --field="QOS Profile:CB" "lossless!lossy" \
   --field="QOS Depth:NUM" "${DEFAULT_QOS_DEPTH}" \
   --field="Pull from GitHub:CHK" "TRUE" \
@@ -150,6 +150,8 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
       pinum=$((pinum + 1))
     done
   done
+  launch_station_tmux_local "127.0.0.1" "rospi" "default_graveyard" "graveyard" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+
   echo "Local tmux session 'post_launch' created with windows for each Pi."
   echo "Attach using: tmux attach-session -t post_launch"
 fi
