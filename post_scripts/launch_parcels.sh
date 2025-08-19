@@ -19,7 +19,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
     --field="Mode":CB "round_robin!random!once" \
-    --field="DDS Config":CB "cyclonedds_source.sh!fastrtps_source.sh" \
+    --field="DDS Config":CB "cyclonedds_source.sh!zenohdds_source.sh!fastrtps_source.sh" \
     --field="Interval (ms)":NUM "$INTERVAL_MS" \
     --field="TTL Value":NUM "$TTL_VALUE" \
     --field="Parcel Count":NUM "$PARCEL_COUNT" \
