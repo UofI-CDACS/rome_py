@@ -119,7 +119,26 @@ from datetime import datetime
 # MongoDB connection
 database = pymongo.MongoClient('mongodb://root:example@172.23.254.20:27017/')
 collection = database['logs']['launchSettings']
+# Parse NEXT_LOCATION to extract station names
+import re
+next_locations = re.findall(r'\w+', '$NEXT_LOCATION')
 
+# Start with current station
+dynamic_sending_lines = ['graph TD']
+for loc in next_locations:
+    dynamic_sending_lines.append('    ' + '$STATION_NAME' + ' --> ' + loc)
+
+# Parse ROUTE_MAP if it exists
+route_map_str = '$ROUTE_MAP'
+if route_map_str and route_map_str != 'None':
+    try:
+        route_map = json.loads(route_map_str)
+        for source, destination in route_map.items():
+            dynamic_sending_lines.append('    ' + source + ' --> ' + destination)
+    except json.JSONDecodeError:
+        pass
+
+dynamic_sending = '\\n'.join(dynamic_sending_lines)
 # Prepare document
 doc = {
     'timestamp': datetime.now(),
@@ -134,7 +153,7 @@ doc = {
     'send_locations': '$NEXT_LOCATION',
     'loss_mode': '$LOSS_MODE',
     'qos_depth': int('$QOS_DEPTH'),
-    'dynamic_sending' : '$ROUTE_MAP' 
+    'dynamic_sending' : dynamic_sending 
     }
 
 # Insert document
