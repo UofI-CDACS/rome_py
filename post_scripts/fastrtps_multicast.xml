@@ -1,17 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<profiles>
+<dds>
+    <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
 
-  <!-- Participant profile named 'default', used unless overridden -->
-  <participant profile_name="default" is_default_profile="true">
+        <!-- Default participant profile -->
+        <participant profile_name="default_participant_profile" is_default_profile="true">
+            <rtps>
+                <builtin>
+                    <discovery_config>
+                        <!-- Use SIMPLE discovery (multicast) -->
+                        <discoveryProtocol>SIMPLE</discoveryProtocol>
+                        <ignoreParticipantFlags>0</ignoreParticipantFlags>
 
-    <rtps>
-      <!-- Use built-in transports (including multicast) -->
-      <useBuiltinTransports>true</useBuiltinTransports>
+                        <!-- Optional: tweak announcements -->
+                        <leaseDuration>10s</leaseDuration>
+                        <leaseAnnouncementPeriod>3s</leaseAnnouncementPeriod>
+                    </discovery_config>
 
-      <!-- No custom locators needed for multicast discovery -->
-    </rtps>
+                    <!-- Enable multicast for discovery traffic -->
+                    <metatrafficMulticastLocatorList>
+                        <locator>
+                            <udpv4>
+                                <address>239.255.0.1</address> <!-- default ROS2 multicast group -->
+                                <port>7400</port>
+                            </udpv4>
+                        </locator>
+                    </metatrafficMulticastLocatorList>
 
-  </participant>
+                </builtin>
+            </rtps>
+        </participant>
 
-</profiles>
-
+    </profiles>
+</dds>
