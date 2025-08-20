@@ -124,7 +124,7 @@ import re
 next_locations = re.findall(r'\w+', '$NEXT_LOCATION')
 
 # Start with current station
-dynamic_sending_lines = ['graph RL']
+dynamic_sending_lines = ['graph LR']
 for loc in next_locations:
     dynamic_sending_lines.append('    ' + '$STATION_NAME' + ' --> ' + loc)
 
@@ -137,6 +137,12 @@ if route_map_str and route_map_str != 'None':
             dynamic_sending_lines.append('    ' + source + ' --> ' + destination)
     except json.JSONDecodeError:
         pass
+dynamic_sending_lines.append('    classDef gold fill:#FDB515,stroke:#333,stroke-width:2px,color:#000')
+dynamic_sending_lines.append('    classDef silver fill:#C0C0C0,stroke:#333,stroke-width:2px,color:#000')
+dynamic_sending_lines.append('    class ' + '$STATION_NAME' + ' gold')
+for i, loc in enumerate(next_locations):
+    color_class = 'silver' if i % 2 == 0 else 'gold'
+    dynamic_sending_lines.append('    class ' + loc + ' ' + color_class)
 
 dynamic_sending = '\\n'.join(dynamic_sending_lines)
 # Prepare document
