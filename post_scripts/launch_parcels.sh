@@ -124,7 +124,7 @@ import re
 next_locations = re.findall(r'\w+', '$NEXT_LOCATION')
 
 # Start with current station
-dynamic_sending_lines = ['graph TD']
+dynamic_sending_lines = ['graph RL']
 for loc in next_locations:
     dynamic_sending_lines.append('    ' + '$STATION_NAME' + ' --> ' + loc)
 
