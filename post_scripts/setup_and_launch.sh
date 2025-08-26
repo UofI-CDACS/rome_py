@@ -18,7 +18,7 @@ declare -A PI_USERS=(
 )
 
 declare -A PI_NAMES=(
-  [127.0.0.1]="default_graveyard"
+  #[127.0.0.1]="default_graveyard"
   [172.23.254.24]="rospi_1"
   [172.23.254.22]="rospi_2"
   [172.23.254.23]="rospi_3"
@@ -45,13 +45,13 @@ launch_station_tmux_local() {
   local qos_depth="$8"
 
   local session_name="post_launch"
-  local window_name="${ip//./_}"
+  local window_name="${node_name}"  # Use node_name instead of IP for unique windows
 
   # Create new window (or session if none exists)
   if ! tmux has-session -t "$session_name" 2>/dev/null; then
     tmux new-session -d -s "$session_name" -n "$window_name"
   else
-    if tmux list-windows -t "$session_name" | grep -q "^$window_name"; then
+    if tmux list-windows -t "$session_name" | grep -q "^[0-9]*: $window_name"; then
       tmux kill-window -t "${session_name}:$window_name"
     fi
     tmux new-window -t "$session_name" -n "$window_name"
@@ -85,12 +85,13 @@ fi
 DEFAULT_DDS="cyclonedds_source.sh"
 DEFAULT_QOS_PROFILE="lossless"
 DEFAULT_QOS_DEPTH="10"
-
+STATIONS_PER_PI=4
 FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" \
   --text="Configure Launch Parameters" \
   --field="Workspace Folder:TXT" "${DEFAULT_WORKSPACE}" \
   --field="Branch Name:TXT" "${DEFAULT_BRANCH}" \
-  --field="DDS Config:CB" "cyclonedds_source.sh!fastrtps_source.sh" \
+  --field="Station Count:NUM" "${STATIONS_PER_PI}" \
+  --field="DDS Config:CB" "cyclonedds_source.sh!zenohdds_source.sh!fastrtps_source.sh" \
   --field="QOS Profile:CB" "lossless!lossy" \
   --field="QOS Depth:NUM" "${DEFAULT_QOS_DEPTH}" \
   --field="Pull from GitHub:CHK" "TRUE" \
@@ -107,11 +108,12 @@ if [ "${YAD_EXIT_CODE}" -ne 0 ] || [ -z "${FORM_OUTPUT}" ]; then
   exit 0
 fi
 
-IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME DDS_CONFIG_FILE QOS_PROFILE QOS_DEPTH PULL_GITHUB FORCE_GIT BUILD_WORKSPACE SSH_PIS <<<"${FORM_OUTPUT}"
+IFS=',' read -r WORKSPACE_FOLDER BRANCH_NAME STATION_COUNT DDS_CONFIG_FILE QOS_PROFILE QOS_DEPTH PULL_GITHUB FORCE_GIT BUILD_WORKSPACE SSH_PIS <<<"${FORM_OUTPUT}"
 
 echo "Parsed values:"
 echo "  WORKSPACE_FOLDER = $WORKSPACE_FOLDER"
 echo "  BRANCH_NAME      = $BRANCH_NAME"
+echo "  STATION_COUNT    = $STATION_COUNT"
 echo "  DDS_CONFIG_FILE  = $DDS_CONFIG_FILE"
 echo "  QOS_PROFILE      = $QOS_PROFILE"
 echo "  QOS_DEPTH        = $QOS_DEPTH"
@@ -143,10 +145,15 @@ if [[ "${SSH_PIS}" == "TRUE" ]]; then
   if tmux has-session -t post_launch 2>/dev/null; then
     tmux kill-session -t post_launch
   fi
-  for ip in "${!PI_USERS[@]}"; do
-    launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "${PI_NAMES[$ip]}" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
-    sleep 2
+  pinum=1
+  for ip in "${!PI_NAMES[@]}"; do
+    for i in $(seq 1 "$STATION_COUNT"); do
+      launch_station_tmux_local "$ip" "${PI_USERS[$ip]}" "rospi_$pinum" "${PI_TYPES[$ip]}" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+      pinum=$((pinum + 1))
+    done
   done
+  launch_station_tmux_local "127.0.0.1" "rospi" "default_graveyard" "graveyard" "${WORKSPACE_FOLDER}" "${DDS_CONFIG_FILE}" "${QOS_PROFILE}" "${QOS_DEPTH}"
+
   echo "Local tmux session 'post_launch' created with windows for each Pi."
   echo "Attach using: tmux attach-session -t post_launch"
 fi

@@ -9,7 +9,7 @@ TTL_VALUE="${TTL_VALUE:-10}"
 DDS_CONFIG="${DDS_CONFIG:-cyclonedds_source.sh}"
 PARCEL_COUNT="${PARCEL_COUNT:-100}"
 OWNER="${OWNER:-Owner}"
-INSTRUCTION_SET="${INSTRUCTION_SET:-loop}"
+INSTRUCTION_SET="${INSTRUCTION_SET:-loop_dynamic}"
 LOOP_INFINITELY="${LOOP_INFINITELY:-FALSE}"
 LOSS_MODE="${LOSS_MODE:-lossless}"  # 'lossy' or 'lossless'
 CUSTOM_PARAMS="${CUSTOM_PARAMS:-FALSE}"
@@ -19,7 +19,7 @@ FORM_OUTPUT=$(yad --form --title="Launch Parcel Script" --text="Enter the Parcel
     --field="Workspace Folder":TXT "$WORKSPACE_FOLDER" \
     --field="Station Name":TXT "$STATION_NAME" \
     --field="Mode":CB "round_robin!random!once" \
-    --field="DDS Config":CB "cyclonedds_source.sh!fastrtps_source.sh" \
+    --field="DDS Config":CB "cyclonedds_source.sh!zenohdds_source.sh!fastrtps_source.sh" \
     --field="Interval (ms)":NUM "$INTERVAL_MS" \
     --field="TTL Value":NUM "$TTL_VALUE" \
     --field="Parcel Count":NUM "$PARCEL_COUNT" \
@@ -72,6 +72,15 @@ if [ "$CUSTOM_PARAMS" = "TRUE" ]; then
 else
     PARAMS=""
 fi
+ROUTE_DEFAULT='{"rospi_1": "rospi_2", "rospi_2": "rospi_3", "rospi_3": "rospi_4", "rospi_4": "rospi_1"}'
+if [ $INSTRUCTION_SET = "loop_dynamic" ]; then
+    ROUTE_MAP=$(yad --entry --title="Dynamic Route Configuration" --text="Enter route mapping (JSON format):\nExample: {\"rospi_1\": \"rospi_2\", \"rospi_2\": \"rospi_4\", \"rospi_3\": \"rospi_1\", \"rospi_4\": \"rospi_3\"}" --entry-text "$ROUTE_DEFAULT" --button="OK:0" --button="Cancel:1" --width=600 --height=200)
+    if [ $? -ne 0 ] || [ -z "$ROUTE_MAP" ]; then
+        echo "Route configuration cancelled or empty"
+        exit 1
+    fi
+    echo "ROUTE_MAP: $ROUTE_MAP"
+fi
 #yad --question --title="Parse Logs" --text="Do you want to parse the logs?" --button=Yes:0 --button=No:1
 #if [ $? -eq 0 ]; then
 #    PARSE_LOGS=true
@@ -84,15 +93,23 @@ source "$WORKSPACE_FOLDER/install/setup.bash"
 source "$WORKSPACE_FOLDER/src/post/post_scripts/$DDS_CONFIG" "$WORKSPACE_FOLDER"
 
 if [ -n "$PARAMS" ]; then
-    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s .)
+    if [ -n "$ROUTE_MAP" ]; then
+        # Escape the route JSON properly
+        ROUTE_ESCAPED=$(printf '%s' "$ROUTE_MAP" | sed 's/"/\\"/g')
+        PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq --arg route "$ROUTE_ESCAPED" '. + ["ttl:'$TTL_VALUE'", "route:\($route)"]')
+    else
+        PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ["ttl:'$TTL_VALUE'"]')
+    fi
 else
-    PARAMS_JSON="{}"
+    if [ -n "$ROUTE_MAP" ]; then
+        # Escape the route JSON properly
+        ROUTE_ESCAPED=$(printf '%s' "$ROUTE_MAP" | sed 's/"/\\"/g')
+        PARAMS_JSON='["ttl:'$TTL_VALUE'", "route:'$ROUTE_ESCAPED'"]'
+    else
+        PARAMS_JSON='["ttl:'$TTL_VALUE'"]'
+    fi
 fi
-if [ -n "$PARAMS" ]; then
-    PARAMS_JSON=$(printf '%s\n' "${PARAMS[@]}" | jq -R . | jq -s . | jq '. + ["ttl:'$TTL_VALUE'"]')
-else
-    PARAMS_JSON='["ttl:'$TTL_VALUE'"]'
-fi
+
 echo "PARAMS_JSON: $PARAMS_JSON"
 python3 -c "
 import pymongo
@@ -102,7 +119,24 @@ from datetime import datetime
 # MongoDB connection
 database = pymongo.MongoClient('mongodb://root:example@172.23.254.20:27017/')
 collection = database['logs']['launchSettings']
+# Parse NEXT_LOCATION to extract station names
+import re
+next_locations = re.findall(r'\w+', '$NEXT_LOCATION')
+# Start with current station
+dynamic_sending_lines = ['%%{init: {\'theme\': \'base\', \'themeVariables\': { \'primaryColor\': \'#fb0\', \'fontSize\': \'18px\', \'fontFamily\': \'monospace\'}}}%%', 'graph LR']
+for loc in next_locations:
+    dynamic_sending_lines.append('    ' + '$STATION_NAME' + ' --> ' + loc)
 
+# Parse ROUTE_MAP if it exists
+route_map_str = '$ROUTE_MAP'
+if route_map_str and route_map_str != 'None':
+    try:
+        route_map = json.loads(route_map_str)
+        for source, destination in route_map.items():
+            dynamic_sending_lines.append('    ' + source + ' --> ' + destination)
+    except json.JSONDecodeError:
+        pass
+dynamic_sending = '\\n'.join(dynamic_sending_lines)
 # Prepare document
 doc = {
     'timestamp': datetime.now(),
@@ -117,6 +151,7 @@ doc = {
     'send_locations': '$NEXT_LOCATION',
     'loss_mode': '$LOSS_MODE',
     'qos_depth': int('$QOS_DEPTH'),
+    'dynamic_sending' : dynamic_sending 
     }
 
 # Insert document
@@ -161,6 +196,7 @@ if [ "$LOOP_INFINITELY" = "TRUE" ]; then
         -p instruction_set:="$INSTRUCTION_SET" \
         -p data:="$PARAMS_JSON"
     sleep 5 # This should be adjusted to be more accurate on when the logging is done
-    if [ "$PARSE_LOGS" = true ]; then
-        python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+        if [ "$PARSE_LOGS" = true ]; then
+            python3 "$WORKSPACE_FOLDER/src/post/post_scripts/logParser.py"
+        fi
     fi

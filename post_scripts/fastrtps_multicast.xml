@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<profiles>
+<dds>
+    <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
 
-  <!-- Participant profile named 'default', used unless overridden -->
-  <participant profile_name="default" is_default_profile="true">
+        <participant profile_name="default_participant_profile" is_default_profile="true">
+            <rtps>
+                <builtin>
+                    <discovery_config>
+                        <discoveryProtocol>SIMPLE</discoveryProtocol>
+                        <ignoreParticipantFlags>NO_FILTER</ignoreParticipantFlags>
+                    </discovery_config>
+                </builtin>
+            </rtps>
+        </participant>
 
-    <rtps>
-      <!-- Use built-in transports (including multicast) -->
-      <useBuiltinTransports>true</useBuiltinTransports>
-
-      <!-- No custom locators needed for multicast discovery -->
-    </rtps>
-
-  </participant>
-
-</profiles>
-
+    </profiles>
+</dds>
